@@ -3,7 +3,6 @@
 const SizePlugin = require("size-plugin");
 const CopyWebpackPlugin = require("copy-webpack-plugin");
 const MiniCssExtractPlugin = require("mini-css-extract-plugin");
-
 const PATHS = require("./paths");
 
 // To re-use webpack configuration across templates,
@@ -14,7 +13,6 @@ const common = {
   output: {
     // the build folder to output bundles and assets in.
     path: PATHS.build,
-    publicPath: PATHS.build,
     // the filename template for entry chunks
     filename: "[name].js",
   },
@@ -28,7 +26,8 @@ const common = {
       // Help webpack in understanding CSS files imported in .js files
       {
         test: /\.css$/,
-        use: [MiniCssExtractPlugin.loader, "css-loader"],
+        // use: [MiniCssExtractPlugin.loader, "css-loader"],
+        use: ["style-loader", "css-loader"],
       },
       // Check for images imported in .js files and
       {
@@ -58,9 +57,9 @@ const common = {
       ],
     }),
     // Extract CSS into separate files
-    new MiniCssExtractPlugin({
-      filename: "[name].css",
-    }),
+    // new MiniCssExtractPlugin({
+    //   filename: "[name].css",
+    // }),
   ],
 };
 
