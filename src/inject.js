@@ -22,7 +22,8 @@ import "monaco-editor/esm/vs/editor/standalone/browser/referenceSearch/standalon
 import "monaco-editor/esm/vs/editor/standalone/browser/toggleHighContrast/toggleHighContrast.js";
 
 // lang server
-import { listen, MessageConnection } from "vscode-ws-jsonrpc";
+import { listen } from "./monaco-jsonrpc/lib/index";
+
 const {
   MonacoLanguageClient,
   CloseAction,
@@ -169,6 +170,8 @@ function initialize(init_code) {
 
   monaco_editor.onDidContentSizeChange(updateHeight);
   updateHeight();
+
+  const setImmediate = require("setimmediate");
 
   // install Monaco language client services
   MonacoServices.install(monaco);

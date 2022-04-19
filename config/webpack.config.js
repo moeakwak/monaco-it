@@ -1,7 +1,7 @@
 "use strict";
 
 const { merge } = require("webpack-merge");
-const webpack = require('webpack');
+const webpack = require("webpack");
 const common = require("./webpack.common.js");
 const PATHS = require("./paths");
 // const MonacoWebpackPlugin = require("monaco-editor-webpack-plugin");
@@ -52,17 +52,20 @@ const config = (env, argv) =>
           include: /node_modules[\\\/]monaco-editor[\\\/]esm/,
           use: MonacoWebpackPlugin.loader,
         },
-        {
-          test: /\.js$/,
-          loader: 'string-replace-loader',
-          options: {
-            search: /setImmediate *\( *(\(.*\) *=> *\{.*\}) *\)/i,
-            replace(match, p1, offset, string) {
-              console.log(`Replace "${match}" in file "${this.resource}, string: ${string}".`)
-              return `setTimeout(${p1}, 0)`;
-            },
-          }
-        }
+        // {
+        //   test: /\.js$/,
+        //   loader: "string-replace-loader",
+        //   options: {
+        //     search: /setImmediate *\( *\(.*\) *=> *(.*) *\)/i,
+        //     // \(.*\) *=> *\{.*\}
+        //     replace(match, p1, offset, string) {
+        //       log.info(
+        //         `Replace "${match}" in file "${this.resource} to setTimeout(${p1}, 0)".`
+        //       );
+        //       return `setTimeout(${p1}, 0)`;
+        //     },
+        //   },
+        // },
       ],
     },
     plugins: [
@@ -71,8 +74,12 @@ const config = (env, argv) =>
         Buffer: ["buffer", "Buffer"],
       }),
       new webpack.ProvidePlugin({
-        process: 'process/browser',
-    }),
+        process: "process/browser",
+      }),
+      new webpack.ProvidePlugin({
+        setImmediate: ['setimmediate', 'setImmedate'],
+        clearImmediate: ['setimmediate', 'clearImmedate']
+     }),
     ],
     resolve: {
       fallback: {
@@ -84,13 +91,18 @@ const config = (env, argv) =>
         net: false,
       },
       alias: {
-        '@Shared': require('path').resolve(__dirname, 'src/shared'),
-        'vscode': require.resolve('monaco-languageclient/lib/vscode-compatibility')
-      }
+        "@Shared": require("path").resolve(__dirname, "src/shared"),
+        vscode: require.resolve(
+          "monaco-languageclient/lib/vscode-compatibility"
+        ),
+      },
     },
     // externals: {
     //   vscode: "commonjs vscode",
     // },
+    // node: {
+    //   setImmediate: 'mock'
+    // }
   });
 
 module.exports = config;

@@ -1,3 +1,6 @@
 [submodule "monaco-languageclient"]
 	path = monaco-languageclient
 	url = https://github.com/TypeFox/monaco-languageclient.git
+[submodule "src/monaco-jsonrpc"]
+	path = src/monaco-jsonrpc
+	url = https://github.com/CodinGame/monaco-jsonrpc

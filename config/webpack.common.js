@@ -65,6 +65,7 @@ const common = {
     //   filename: "[name].css",
     // }),
   ],
+  
 };
 
 module.exports = common;
