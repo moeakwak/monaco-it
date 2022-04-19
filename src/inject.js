@@ -21,7 +21,7 @@ console.log("init_language", init_language);
 
 function get_ace_language() {
   let lang = ace_editor_session.getMode().$id.replace("ace/mode/", "");
-  if ((lang = "c_cpp")) lang = "cpp";
+  if (lang == "c_cpp") lang = "cpp";
   return lang;
 }
 
