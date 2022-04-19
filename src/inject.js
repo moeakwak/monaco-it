@@ -22,7 +22,7 @@ import "monaco-editor/esm/vs/editor/standalone/browser/referenceSearch/standalon
 import "monaco-editor/esm/vs/editor/standalone/browser/toggleHighContrast/toggleHighContrast.js";
 
 // lang server
-import { listen } from "./monaco-jsonrpc/lib/index";
+import { listen } from "@codingame/monaco-jsonrpc";
 
 const {
   MonacoLanguageClient,
