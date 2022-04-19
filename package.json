@@ -8,11 +8,16 @@
     "build": "webpack --mode=production --config config/webpack.config.js"
   },
   "devDependencies": {
+    "@babel/core": "^7.17.9",
+    "babel-loader": "^8.2.4",
     "copy-webpack-plugin": "^10.2.4",
     "css-loader": "^6.7.1",
     "file-loader": "^6.2.0",
+    "i": "^0.3.7",
     "mini-css-extract-plugin": "^2.6.0",
+    "npm": "^8.7.0",
     "size-plugin": "^3.0.0",
+    "string-replace-loader": "^3.1.0",
     "webpack": "^5.72.0",
     "webpack-cli": "^4.9.2",
     "webpack-merge": "^5.8.0"
@@ -25,7 +30,7 @@
     "monaco-editor-esm-webpack-plugin": "^2.0.2",
     "monaco-editor-nls": "^2.0.0",
     "monaco-editor-webpack-plugin": "^7.0.1",
-    "monaco-languageclient": "file:./src/client",
+    "monaco-languageclient": "^0.18.1",
     "os-browserify": "^0.3.0",
     "path-browserify": "^1.0.1",
     "process": "^0.11.10",

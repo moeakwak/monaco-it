@@ -10,16 +10,27 @@ import zh_CN from "monaco-editor-nls/locale/zh-hans";
 setLocaleData(zh_CN);
 const monaco = require("monaco-editor");
 
+import "monaco-editor/esm/vs/editor/standalone/browser/accessibilityHelp/accessibilityHelp.js";
+import "monaco-editor/esm/vs/editor/standalone/browser/inspectTokens/inspectTokens.js";
+import "monaco-editor/esm/vs/editor/standalone/browser/iPadShowKeyboard/iPadShowKeyboard.js";
+import "monaco-editor/esm/vs/editor/standalone/browser/quickAccess/standaloneHelpQuickAccess.js";
+import "monaco-editor/esm/vs/editor/standalone/browser/quickAccess/standaloneGotoLineQuickAccess.js";
+import "monaco-editor/esm/vs/editor/standalone/browser/quickAccess/standaloneGotoSymbolQuickAccess.js";
+import "monaco-editor/esm/vs/editor/standalone/browser/quickAccess/standaloneCommandsQuickAccess.js";
+// import "monaco-editor/esm/vs/editor/standalone/browser/quickInput/standaloneQuickInputService.js";
+import "monaco-editor/esm/vs/editor/standalone/browser/referenceSearch/standaloneReferenceSearch.js";
+import "monaco-editor/esm/vs/editor/standalone/browser/toggleHighContrast/toggleHighContrast.js";
+
 // lang server
 import { listen, MessageConnection } from "vscode-ws-jsonrpc";
-import {
+const {
   MonacoLanguageClient,
   CloseAction,
   ErrorAction,
   MonacoServices,
   createConnection,
-} from "./client/src/index";
-const ReconnectingWebSocket = require("reconnecting-websocket");
+} = require("monaco-languageclient");
+import ReconnectingWebSocket from "reconnecting-websocket";
 
 // register Monaco languages
 monaco.languages.register({
@@ -160,12 +171,14 @@ function initialize(init_code) {
   updateHeight();
 
   // install Monaco language client services
-  MonacoServices.install(monaco_editor);
+  MonacoServices.install(monaco);
 
   // create the web socket
   // const url = createUrl("/python");
-  const url = "ws://localhost:3000/python";
+  const url = "ws://localhost:3000/" + monaco_model.getLanguageId();
   const webSocket = createWebSocket(url);
+  // const webSocket = new WebSocket(url);
+  
   // listen when the web socket is opened
   listen({
     webSocket,
@@ -174,6 +187,7 @@ function initialize(init_code) {
       const languageClient = createLanguageClient(connection);
       const disposable = languageClient.start();
       connection.onClose(() => disposable.dispose());
+      console.log(`Connected to "${url}" and started the language client.`);
     },
   });
 }

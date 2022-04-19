@@ -21,6 +21,16 @@ const config = (env, argv) =>
     devtool: argv.mode === "production" ? false : "source-map",
     module: {
       rules: [
+        // {
+        //   test: /\.m?js$/,
+        //   exclude: /node_modules/,
+        //   use: {
+        //     loader: "babel-loader",
+        //     options: {
+        //       presets: ['@babel/preset-env']
+        //     }
+        //   }
+        // },
         {
           test: /codicon\.ttf$/,
           use: [
@@ -42,6 +52,17 @@ const config = (env, argv) =>
           include: /node_modules[\\\/]monaco-editor[\\\/]esm/,
           use: MonacoWebpackPlugin.loader,
         },
+        {
+          test: /\.js$/,
+          loader: 'string-replace-loader',
+          options: {
+            search: /setImmediate *\( *(\(.*\) *=> *\{.*\}) *\)/i,
+            replace(match, p1, offset, string) {
+              console.log(`Replace "${match}" in file "${this.resource}, string: ${string}".`)
+              return `setTimeout(${p1}, 0)`;
+            },
+          }
+        }
       ],
     },
     plugins: [
@@ -62,10 +83,14 @@ const config = (env, argv) =>
         buffer: require.resolve("buffer/"),
         net: false,
       },
+      alias: {
+        '@Shared': require('path').resolve(__dirname, 'src/shared'),
+        'vscode': require.resolve('monaco-languageclient/lib/vscode-compatibility')
+      }
     },
-    externals: {
-      vscode: "commonjs vscode",
-    },
+    // externals: {
+    //   vscode: "commonjs vscode",
+    // },
   });
 
 module.exports = config;

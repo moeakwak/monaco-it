@@ -1,0 +1,3 @@
+[submodule "monaco-languageclient"]
+	path = monaco-languageclient
+	url = https://github.com/TypeFox/monaco-languageclient.git
