@@ -59,7 +59,7 @@ function initialize(init_code) {
   // create monaco editor
   let monaco_div = ace_editor_div.after(
     `
-      <div id="monaco-it-editor" style="position: relative; z-index:9999; min-height: 400px; height: 100%; width: 100%; overflow: hidden;"></div>
+      <div id="monaco-it-editor" style="position: relative; min-height: 400px; height: 100%; width: 100%; "></div>
     `
   );
   let monaco_language = "c";
