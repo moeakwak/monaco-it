@@ -16,32 +16,47 @@ const config = (env, argv) =>
     entry: {
       contentScript: PATHS.src + "/contentScript.js",
       background: PATHS.src + "/background.js",
-      worker: PATHS.src + "/worker.js",
-      editor_popup: PATHS.src + "/editor_popup.js",
+      inject: PATHS.src + "/inject.js",
     },
     devtool: argv.mode === "production" ? false : "source-map",
     module: {
       rules: [
         {
-          test: /\.ttf$/,
-          use: ["file-loader"],
-        },
-        {
-          loader: require.resolve("chrome-url-loader"),
-          test: /(node_modules_monaco_.*\.js|\.ttf)$/,
-          options: {
-            publicDir: "build/lib",
-            baseDir: PATHS.src,
-          },
+          test: /codicon\.ttf$/,
+          use: [
+            {
+              loader: "file-loader",
+              options: {
+                outputPath: "images",
+                name: "[name].[ext]",
+                postTransformPublicPath: (p) => {
+                  return `document.head.getAttribute('data-monaco-editor-public-path') + 'images/codicon.ttf'`;
+                },
+              },
+            },
+          ],
         },
       ],
     },
     plugins: [
       new MonacoWebpackPlugin({
-        languages: ["typescript", "javascript", "css"],
-        publicPath: "",
+        // languages: [
+        //   "typescript",
+        //   "javascript",
+        //   "css",
+        //   "c++",
+        //   "c",
+        //   "java",
+        //   "go",
+        //   "python",
+        // ],
       }),
     ],
+    resolve: {
+      fallback: {
+        path: require.resolve("path-browserify"),
+      },
+    },
   });
 
 module.exports = config;

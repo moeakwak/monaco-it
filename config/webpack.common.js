@@ -27,7 +27,11 @@ const common = {
       {
         test: /\.css$/,
         // use: [MiniCssExtractPlugin.loader, "css-loader"],
-        use: ["style-loader", "css-loader"],
+        // use: ["style-loader", "css-loader"],
+        use: [
+          "style-loader",
+          { loader: "css-loader", options: { esModule: false } },
+        ],
       },
       // Check for images imported in .js files and
       {
