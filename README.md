@@ -1,21 +1,4 @@
 # <img src="public/icons/icon_48.png" width="45" align="left"> Monaco It
 
-My Chrome Extension
-
-## Features
-
-- Feature 1
-- Feature 2
-
-## Install
-
-[**Chrome** extension]() <!-- TODO: Add chrome extension link inside parenthesis -->
-
-## Contribution
-
-Suggestions and pull requests are welcomed!.
-
----
-
-This project was bootstrapped with [Chrome Extension CLI](https://github.com/dutiyesh/chrome-extension-cli)
+Monaco It is a chrome extension which helps change ace editor to monaco editor, supporting all features including autocompletes.
 
