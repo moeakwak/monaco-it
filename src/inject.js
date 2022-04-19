@@ -10,6 +10,25 @@ import zh_CN from "monaco-editor-nls/locale/zh-hans";
 setLocaleData(zh_CN);
 const monaco = require("monaco-editor");
 
+// lang server
+import { listen, MessageConnection } from "vscode-ws-jsonrpc";
+import {
+  MonacoLanguageClient,
+  CloseAction,
+  ErrorAction,
+  MonacoServices,
+  createConnection,
+} from "./client/src/index";
+const ReconnectingWebSocket = require("reconnecting-websocket");
+
+// register Monaco languages
+monaco.languages.register({
+  id: "python",
+  extensions: [".python", ".py", ".pyd"],
+  aliases: ["Python", "python"],
+  mimetypes: ["application/json"],
+});
+
 // load ace editor initial configs
 let ace_editor_div = $(".ace_editor");
 let ace_editor = ace.edit(ace_editor_div.get()[0]);
@@ -136,6 +155,59 @@ function initialize(init_code) {
       ignoreEvent = false;
     }
   };
+
   monaco_editor.onDidContentSizeChange(updateHeight);
   updateHeight();
+
+  // install Monaco language client services
+  MonacoServices.install(monaco_editor);
+
+  // create the web socket
+  // const url = createUrl("/python");
+  const url = "ws://localhost:3000/python";
+  const webSocket = createWebSocket(url);
+  // listen when the web socket is opened
+  listen({
+    webSocket,
+    onConnection: (connection) => {
+      // create and start the language client
+      const languageClient = createLanguageClient(connection);
+      const disposable = languageClient.start();
+      connection.onClose(() => disposable.dispose());
+    },
+  });
+}
+function createLanguageClient(connection) {
+  return new MonacoLanguageClient({
+    name: "Monaco Language Client",
+    clientOptions: {
+      // use a language id as a document selector
+      documentSelector: ["python"],
+      // disable the default error handler
+      errorHandler: {
+        error: () => ErrorAction.Continue,
+        closed: () => CloseAction.DoNotRestart,
+      },
+    },
+    // create a language client connection from the JSON RPC connection on demand
+    connectionProvider: {
+      get: (errorHandler, closeHandler) => {
+        return Promise.resolve(
+          createConnection(connection, errorHandler, closeHandler)
+        );
+      },
+    },
+  });
+}
+
+function createWebSocket(url) {
+  const socketOptions = {
+    maxReconnectionDelay: 10000,
+    minReconnectionDelay: 1000,
+    reconnectionDelayGrowFactor: 1.3,
+    connectionTimeout: 10000,
+    maxRetries: Infinity,
+    debug: false,
+  };
+  return new ReconnectingWebSocket(url, [], socketOptions);
 }

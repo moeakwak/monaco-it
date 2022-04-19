@@ -1,7 +1,7 @@
 "use strict";
 
 const { merge } = require("webpack-merge");
-
+const webpack = require('webpack');
 const common = require("./webpack.common.js");
 const PATHS = require("./paths");
 // const MonacoWebpackPlugin = require("monaco-editor-webpack-plugin");
@@ -44,11 +44,27 @@ const config = (env, argv) =>
         },
       ],
     },
-    plugins: [new MonacoWebpackPlugin({})],
+    plugins: [
+      new MonacoWebpackPlugin({}),
+      new webpack.ProvidePlugin({
+        Buffer: ["buffer", "Buffer"],
+      }),
+      new webpack.ProvidePlugin({
+        process: 'process/browser',
+    }),
+    ],
     resolve: {
       fallback: {
         path: require.resolve("path-browserify"),
+        os: require.resolve("os-browserify/browser"),
+        crypto: require.resolve("crypto-browserify"),
+        stream: require.resolve("stream-browserify"),
+        buffer: require.resolve("buffer/"),
+        net: false,
       },
+    },
+    externals: {
+      vscode: "commonjs vscode",
     },
   });
 
