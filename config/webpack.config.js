@@ -4,8 +4,8 @@ const { merge } = require("webpack-merge");
 
 const common = require("./webpack.common.js");
 const PATHS = require("./paths");
-const MonacoWebpackPlugin = require("monaco-editor-webpack-plugin");
-// const MonacoWebpackPlugin = require("monaco-editor-esm-webpack-plugin");
+// const MonacoWebpackPlugin = require("monaco-editor-webpack-plugin");
+const MonacoWebpackPlugin = require("monaco-editor-esm-webpack-plugin");
 
 // Merge webpack configuration files
 const config = (env, argv) =>
@@ -36,22 +36,15 @@ const config = (env, argv) =>
             },
           ],
         },
+        {
+          test: /\.js/,
+          enforce: "pre",
+          include: /node_modules[\\\/]monaco-editor[\\\/]esm/,
+          use: MonacoWebpackPlugin.loader,
+        },
       ],
     },
-    plugins: [
-      new MonacoWebpackPlugin({
-        // languages: [
-        //   "typescript",
-        //   "javascript",
-        //   "css",
-        //   "c++",
-        //   "c",
-        //   "java",
-        //   "go",
-        //   "python",
-        // ],
-      }),
-    ],
+    plugins: [new MonacoWebpackPlugin({})],
     resolve: {
       fallback: {
         path: require.resolve("path-browserify"),

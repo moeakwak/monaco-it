@@ -3,7 +3,12 @@
 __webpack_public_path__ = document.head.dataset.monacoItPublicPath;
 
 import $ from "jquery";
-import * as monaco from "monaco-editor";
+// import * as monaco from "monaco-editor";
+import { setLocaleData } from "monaco-editor-nls";
+import zh_CN from "monaco-editor-nls/locale/zh-hans";
+
+setLocaleData(zh_CN);
+const monaco = require("monaco-editor");
 
 let ace_editor_div = $(".ace_editor");
 let ace_editor = ace.edit(ace_editor_div.attr("id"));

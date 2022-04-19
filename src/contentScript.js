@@ -1,13 +1,6 @@
 "use strict";
 
 import $ from "jquery";
-//  from "monaco-editor";
-// const monaco = require("monaco-editor");
-
-// import { setLocaleData } from "monaco-editor-nls";
-// import zh_CN from "monaco-editor-nls/locale/zh-hans";
-
-// setLocaleData(zh_CN);
 
 let ace_editor = $(".ace_editor");
 
