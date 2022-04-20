@@ -13,3 +13,7 @@ test
 
 .idea
 .vscode
+*.yaml
+*workspace*
+*.pyc
+__pycache__
