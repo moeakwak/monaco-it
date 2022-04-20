@@ -2,12 +2,12 @@
 
 import $ from "jquery";
 
-let ace_editor = $(".ace_editor");
+let ace_editor_div = $(".ace_editor");
 
-if (ace_editor) {
+if (ace_editor_div.length) {
   console.log(
-    "ace detected! id:",
-    ace_editor.attr("id"),
+    "[monaco-it cs] ace detected! id:",
+    ace_editor_div,
     chrome.runtime.getURL("")
   );
   document.head.dataset.monacoItPublicPath = chrome.runtime.getURL("");
