@@ -21,10 +21,10 @@ export function connectServer(monaco_editor, lang) {
   console.log("[monaco-it] try to connect language server at", url);
   webSocket = createWebSocket(url);
 
-  // webSocket.onError(() => {
-  //   console.log("[monaco-it] client webSocket on error, re-registerCompletion");
-  //   registerCompletion(monaco_editor, lang, false);
-  // });
+  webSocket.onclose = () => {
+    console.log("[monaco-it] client webSocket closed, re-registerCompletion");
+    registerCompletion(monaco_editor, lang, false);
+  };
 
   // listen when the web socket is opened
   listen({
@@ -33,7 +33,13 @@ export function connectServer(monaco_editor, lang) {
       // create and start the language client
       const languageClient = createLanguageClient(connection);
       const disposable = languageClient.start();
-      connection.onClose(() => disposable.dispose());
+      connection.onClose(() => {
+        disposable.dispose();
+        console.log(
+          "[monaco-it] client webSocket closed, re-registerCompletion"
+        );
+        registerCompletion(monaco_editor, lang, false);
+      });
       console.log(
         `[monaco-it] client connected to "${url}" and started the language client for ${lang}.`
       );
