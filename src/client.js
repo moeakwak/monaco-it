@@ -1,6 +1,4 @@
-// lang server
-import { listen } from "@codingame/monaco-jsonrpc";
-
+const monaco = require("monaco-editor");
 const {
   MonacoLanguageClient,
   CloseAction,
@@ -8,44 +6,41 @@ const {
   MonacoServices,
   createConnection,
 } = require("monaco-languageclient");
+
+MonacoServices.install(monaco);
+
 import ReconnectingWebSocket from "reconnecting-websocket";
+import { listen } from "@codingame/monaco-jsonrpc";
+import { registerCompletion } from "./languageLoader";
 
-import { supportedLanguages } from "./language_loader";
-import { registerCpp } from "./languages/cpp";
-
-export function connectServer(monaco, monaco_editor, lang) {
-  if (!lang in supportedLanguages) {
-    console.log("[monaco-it] language autocompletion unsupported:", lang);
-    return null;
-  }
-
+export function connectServer(monaco_editor, lang) {
   let webSocket = null;
 
-  if (lang == "cpp") {
-    registerCpp(monaco, monaco_editor, false);
-  } else if (lang == "python") {
-    // install Monaco language client services
-    MonacoServices.install(monaco);
+  // create the web socket
+  const url = "ws://localhost:3000/" + lang;
+  console.log("[monaco-it] try to connect language server at", url);
+  webSocket = createWebSocket(url);
 
-    // create the web socket
-    const url = "ws://localhost:3000/" + lang;
-    console.log("[monaco-it] try to connect python language server at", url);
-    webSocket = createWebSocket(url);
+  // webSocket.onError(() => {
+  //   console.log("[monaco-it] client webSocket on error, re-registerCompletion");
+  //   registerCompletion(monaco_editor, lang, false);
+  // });
 
-    // listen when the web socket is opened
-    listen({
-      webSocket,
-      onConnection: (connection) => {
-        // create and start the language client
-        const languageClient = createLanguageClient(connection);
-        const disposable = languageClient.start();
-        connection.onClose(() => disposable.dispose());
-        console.log(
-          `[monaco-it] Connected to "${url}" and started the language client for ${lang}.`
-        );
-      },
-    });
-  }
+  // listen when the web socket is opened
+  listen({
+    webSocket,
+    onConnection: (connection) => {
+      // create and start the language client
+      const languageClient = createLanguageClient(connection);
+      const disposable = languageClient.start();
+      connection.onClose(() => disposable.dispose());
+      console.log(
+        `[monaco-it] client connected to "${url}" and started the language client for ${lang}.`
+      );
+      registerCompletion(monaco_editor, lang, true);
+    },
+  });
+
   return webSocket;
 }
 
