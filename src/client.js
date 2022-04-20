@@ -13,10 +13,12 @@ import { supportedLanguages, registerCompletion } from "./languageLoader";
 
 const serverHost = "localhost:3000";
 
-let webSocket = null;
+let languageWebSocket = null;
+let fileWebSocket = null;
 
 export function connectServer(
   monaco_editor,
+  monaco_model,
   lang,
   workspace_dir_path,
   filename
@@ -25,25 +27,26 @@ export function connectServer(
     return null;
   }
 
-  MonacoServices.install(monaco_editor, {
-    rootUri: workspace_dir_path,
-  });
+  if (lang == "cpp")
+    MonacoServices.install(monaco, {
+      rootUri: workspace_dir_path,
+    });
 
   // create the web socket
   let url = "ws://" + serverHost + "/" + lang;
   console.log("[monaco-it client] try to connect language server at", url);
-  webSocket = createWebSocket(url);
+  languageWebSocket = createWebSocket(url);
 
-  webSocket.onclose = () => {
+  languageWebSocket.onclose = () => {
     console.log(
-      "[monaco-it client] client webSocket closed, re-registerCompletion"
+      "[monaco-it client] client languageWebSocket closed, re-registerCompletion"
     );
     registerCompletion(monaco_editor, lang, false);
   };
 
   // listen when the web socket is opened
   listen({
-    webSocket,
+    webSocket: languageWebSocket,
     onConnection: (connection) => {
       // create and start the language client
       const languageClient = createLanguageClient(connection);
@@ -51,7 +54,7 @@ export function connectServer(
       connection.onClose(() => {
         disposable.dispose();
         console.log(
-          "[monaco-it client] webSocket closed, re-registerCompletion"
+          "[monaco-it client] languageWebSocket closed, re-registerCompletion"
         );
         registerCompletion(monaco_editor, lang, false);
       });
@@ -59,8 +62,13 @@ export function connectServer(
         `[monaco-it client] connected to "${url}" and started the language client for ${lang}.`
       );
       registerCompletion(monaco_editor, lang, true);
-      monaco_editor.onDidChangeModelContent((e) => {
-        if (webSocket.readyState === WebSocket.CLOSED) {
+      // let monaco_model = monaco_editor.getModel(
+      //   monaco.Uri.parse(
+      //     "file://" + require("path").join(workspace_dir_path, filename)
+      //   )
+      // );
+      monaco_model.onDidChangeContent((e) => {
+        if (languageWebSocket.readyState === WebSocket.OPEN) {
           console.log("[monaco-it client] try to update file");
           updateFile(filename, monaco_editor.getModel().getValue());
         }
@@ -68,36 +76,53 @@ export function connectServer(
     },
   });
 
-  return webSocket;
+  return languageWebSocket;
 }
 
 export function getWorkspaceDirPath(success_cb, error_cb) {
-  let url = "http://" + serverHost + "/file";
-  $.ajax(url, {
-    dataType: "json",
-    type: "GET",
-    success: success_cb,
-    error: error_cb,
-  });
+  let url = "ws://" + serverHost + "/file";
+  let webSocket = new WebSocket(url);
+  let closed = false;
+  webSocket.onopen = () => {
+    webSocket.send(JSON.stringify({ type: "get_workspace_dir_path" }));
+  };
+  webSocket.onclose = (ev) => {
+    if (!closed) error_cb(ev);
+  };
+  webSocket.onmessage = (ev) => {
+    let message = JSON.parse(ev.data);
+    if (message.result == "ok") {
+      success_cb(message);
+    } else {
+      if (!closed) error_cb(ev);
+    }
+    closed = true;
+    webSocket.close();
+  };
 }
 
 export function updateFile(filename, code) {
-  let url = "http://" + serverHost + "/file";
-  $.ajax(url, {
-    data: JSON.stringify({
-      type: "update",
-      filename,
-      code,
-    }),
-    contentType: "application/json",
-    type: "POST",
-    success: () => {
-      console.log("[monaco-it client] update file success:", filename);
-    },
-    error: () => {
-      console.warn("[monaco-it client] update file error:", filename);
-    },
-  });
+  let url = "ws://" + serverHost + "/file";
+  if (!!fileWebSocket && fileWebSocket.readyState == fileWebSocket.OPEN) {
+    // reuse opening fileWebSocket
+    fileWebSocket.send(JSON.stringify({ type: "update", filename, code }));
+  } else {
+    fileWebSocket = new WebSocket(url);
+    fileWebSocket.onopen = (ev) => {
+      fileWebSocket.send(JSON.stringify({ type: "update", filename, code }));
+    };
+    fileWebSocket.onclose = (ev) => {
+      console.warn("[monaco-it client] fileWebSocket closed:", filename, ev);
+    };
+    fileWebSocket.onmessage = (ev) => {
+      let message = JSON.parse(ev.data);
+      if (message.result == "ok") {
+        console.log("[monaco-it client] update file success:", filename);
+      } else {
+        console.warn("[monaco-it client] update file failed:", ev);
+      }
+    };
+  }
 }
 
 function createLanguageClient(connection) {
@@ -105,7 +130,7 @@ function createLanguageClient(connection) {
     name: "Monaco Language Client",
     clientOptions: {
       // use a language id as a document selector
-      documentSelector: ["python"],
+      documentSelector: ["cpp"],
       // disable the default error handler
       errorHandler: {
         error: () => ErrorAction.Continue,
@@ -130,7 +155,7 @@ function createWebSocket(url) {
     reconnectionDelayGrowFactor: 1.3,
     connectionTimeout: 10000,
     maxRetries: 0,
-    debug: true,
+    debug: false,
   };
   return new ReconnectingWebSocket(url, [], socketOptions);
 }

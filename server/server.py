@@ -18,6 +18,11 @@ log = logging.getLogger(__name__)
 
 
 class HomeRequestHandler(web.RequestHandler):
+    commands = None
+
+    def initialize(self, commands) -> None:
+        self.commands = commands
+
     def get(self):
         self.write("""
         <h1>Language Server</h1>
@@ -30,40 +35,34 @@ class HomeRequestHandler(web.RequestHandler):
         )))
 
 
-class FileRequestHandler(web.RequestHandler):
+class FileServerWebSocketHandler(websocket.WebSocketHandler):
     workspace_dir_path = None
 
     def initialize(self, workspace_dir_path) -> None:
         self.workspace_dir_path = workspace_dir_path
 
-    def prepare(self):
-        if self.request.headers['Content-Type'] == 'application/json':
-            self.args = json.loads(self.request.body)
-        else:
-            self.set_status(400)
-            self.finish("must be JSON request")
+    def open(self, *args, **kwargs):
+        log.info("new FileServerWebSocketHandler request")
 
-    def get(self):
-        # return workspace_dir_path absolute path
-        self.write({
-            'workspace_dir_path': workspace_dir_path
-        })
-
-    def post(self):
-        if self.args['type'] != "update":
-            self.set_status(400)
-            self.finish("unsupported type " + self.args['type'])
+    def on_message(self, message):
+        message = json.loads(message)
+        if message['type'] == 'get_workspace_dir_path':
+            self.write_message(json.dumps({'result': 'ok', 'data': workspace_dir_path}))
+        elif message['type'] == 'update':
+            if 'filename' not in message or 'code' not in message:
+                self.write_message(json.dumps({'result': 'error', 'description': 'no filename or code'}))
+            else:
+                filename = message['filename']
+                code = message['code']
+                with open(os.path.join(workspace_dir_path, filename), 'w') as f:
+                    f.write(code)
+                log.info("update file {} with {} characters".format(filename, len(code)))
+                self.write_message(json.dumps({'result': 'ok'}))
         else:
-            if not 'filename' in self.args or not 'code' in self.args:
-                self.set_status(400)
-                self.finish("missing filename or code")
-            filename = self.args['filename']
-            code = self.args['code']
-            with open(os.path.join(workspace_dir_path, filename), 'w') as f:
-                f.write(code)
-            log.info("update file {} with {} characters".format(
-                filename, len(code)))
-            self.finish()
+            self.write_message(json.dumps({'result': 'error', 'description': 'no such type'}))
+
+    def check_origin(self, origin):
+        return True
 
 
 class LanguageServerWebSocketHandler(websocket.WebSocketHandler):
@@ -103,8 +102,9 @@ class LanguageServerWebSocketHandler(websocket.WebSocketHandler):
 
     def on_message(self, message):
         """Forward client->server messages to the endpoint."""
-        # print(message)  # non-ascii characters cannot be printed, thus cause infinite exception & re-starting
-        self.writer.write(json.loads(message))
+        temp = json.loads(message)
+        print(temp)
+        self.writer.write(temp)
 
     def check_origin(self, origin):
         return True
@@ -133,12 +133,12 @@ if __name__ == "__main__":
         os.path.abspath(__file__)), "cpp_workspace")
     if not os.path.exists(workspace_dir_path):
         os.makedirs(workspace_dir_path)
-    
+
     print("use config: {}\ncurrent workspace_dir_path: {}\n".format(config_path, workspace_dir_path))
 
     app = web.Application([
-        (r"/", HomeRequestHandler),
-        (r"/file", FileRequestHandler, dict(workspace_dir_path=workspace_dir_path)),
+        (r"/", HomeRequestHandler, dict(commands=config['commands'])),
+        (r"/file", FileServerWebSocketHandler, dict(workspace_dir_path=workspace_dir_path)),
         (r"/(.*)", LanguageServerWebSocketHandler,
          dict(commands=config['commands']))
     ])
@@ -149,6 +149,6 @@ if __name__ == "__main__":
     print("\nStarted Web Socket at:\n" + "\n".join(
         ["  - {}: ws://{}:{}/{}".format(lang, config['host'],
                                         config['port'], lang) for lang in config['commands'].keys()])
-    )
+          )
     app.listen(config['port'], address=config['host'])
     ioloop.IOLoop.current().start()

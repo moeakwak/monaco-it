@@ -39,7 +39,7 @@ export function registerCompletion(editor, lang, enableLanguageService) {
           lang,
           enableLanguageService
         );
-        console.log("[monaco-it] provideCompletionItems", suggestions);
+        // console.log("[monaco-it] provideCompletionItems", suggestions);
         return {
           suggestions: suggestions,
         };
