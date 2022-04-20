@@ -7,26 +7,37 @@ const {
   createConnection,
 } = require("monaco-languageclient");
 
-MonacoServices.install(monaco);
-
 import ReconnectingWebSocket from "reconnecting-websocket";
 import { listen } from "@codingame/monaco-jsonrpc";
 import { supportedLanguages, registerCompletion } from "./languageLoader";
 
-export function connectServer(monaco_editor, lang) {
+const serverHost = "localhost:3000";
+
+let webSocket = null;
+
+export function connectServer(
+  monaco_editor,
+  lang,
+  workspace_dir_path,
+  filename
+) {
   if (!supportedLanguages.includes(lang)) {
     return null;
   }
 
-  let webSocket = null;
+  MonacoServices.install(monaco_editor, {
+    rootUri: workspace_dir_path,
+  });
 
   // create the web socket
-  const url = "ws://localhost:3000/" + lang;
-  console.log("[monaco-it] try to connect language server at", url);
+  let url = "ws://" + serverHost + "/" + lang;
+  console.log("[monaco-it client] try to connect language server at", url);
   webSocket = createWebSocket(url);
 
   webSocket.onclose = () => {
-    console.log("[monaco-it] client webSocket closed, re-registerCompletion");
+    console.log(
+      "[monaco-it client] client webSocket closed, re-registerCompletion"
+    );
     registerCompletion(monaco_editor, lang, false);
   };
 
@@ -40,18 +51,53 @@ export function connectServer(monaco_editor, lang) {
       connection.onClose(() => {
         disposable.dispose();
         console.log(
-          "[monaco-it] client webSocket closed, re-registerCompletion"
+          "[monaco-it client] webSocket closed, re-registerCompletion"
         );
         registerCompletion(monaco_editor, lang, false);
       });
       console.log(
-        `[monaco-it] client connected to "${url}" and started the language client for ${lang}.`
+        `[monaco-it client] connected to "${url}" and started the language client for ${lang}.`
       );
       registerCompletion(monaco_editor, lang, true);
+      monaco_editor.onDidChangeModelContent((e) => {
+        if (webSocket.readyState === WebSocket.CLOSED) {
+          console.log("[monaco-it client] try to update file");
+          updateFile(filename, monaco_editor.getModel().getValue());
+        }
+      });
     },
   });
 
   return webSocket;
+}
+
+export function getWorkspaceDirPath(success_cb, error_cb) {
+  let url = "http://" + serverHost + "/file";
+  $.ajax(url, {
+    dataType: "json",
+    type: "GET",
+    success: success_cb,
+    error: error_cb,
+  });
+}
+
+export function updateFile(filename, code) {
+  let url = "http://" + serverHost + "/file";
+  $.ajax(url, {
+    data: JSON.stringify({
+      type: "update",
+      filename,
+      code,
+    }),
+    contentType: "application/json",
+    type: "POST",
+    success: () => {
+      console.log("[monaco-it client] update file success:", filename);
+    },
+    error: () => {
+      console.warn("[monaco-it client] update file error:", filename);
+    },
+  });
 }
 
 function createLanguageClient(connection) {

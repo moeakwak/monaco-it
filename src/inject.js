@@ -4,8 +4,8 @@
 __webpack_public_path__ = document.head.dataset.monacoItPublicPath;
 
 import { getMonacoEnvironment } from "./utils";
-import { connectServer } from "./client";
-import { supportedLanguages,registerLanguages } from "./languageLoader";
+import { connectServer, getWorkspaceDirPath } from "./client";
+import { supportedLanguages, registerLanguages } from "./languageLoader";
 
 import $ from "jquery";
 
@@ -28,7 +28,6 @@ let ace_editor_session = ace_editor.getSession();
 let readOnly = ace_editor.getReadOnly();
 
 let current_language = get_ace_language(ace_editor);
-console.log("init language:", current_language);
 
 function get_ace_language() {
   let lang = ace_editor_session.getMode().$id.replace("ace/mode/", "");
@@ -37,10 +36,46 @@ function get_ace_language() {
 }
 
 // initialize
-console.log("initialize", ace_editor.getValue());
-initialize(ace_editor.getValue());
+console.log(
+  "[monaco-it inject] start initialize, init language: ",
+  current_language
+);
 
-function initialize(init_code) {
+let enableLanguageService = false;
+
+// try to connect language server, and get workspace_dir_path for rootUri
+getWorkspaceDirPath(
+  (result) => {
+    enableLanguageService = true;
+    let workspace_dir_path = result.workspace_dir_path;
+    console.log(
+      "[monaco-it inject] connect language serve success, workspace_dir_path:",
+      workspace_dir_path
+    );
+    initialize(ace_editor.getValue(), workspace_dir_path);
+  },
+  (xhr, textStatus, errorThrown) => {
+    enableLanguageService = false;
+    console.log(
+      "[monaco-it inject] connect language serve failed:",
+      xhr,
+      textStatus,
+      errorThrown
+    );
+    initialize(ace_editor.getValue(), null);
+  }
+);
+
+function urlToFileName(lang) {
+  return (
+    document.location.href
+      .replace(/.*:\/\//i, "")
+      .replace(/[:\/ \?<>\\\*\.]/g, "_")
+      .replace(/_+/g, "_") + lang + ".txt"
+  );
+}
+
+function initialize(init_code, workspace_dir_path) {
   // avoid CROS
   let baseUrl = $("head").attr("data-monaco-editor-public-path");
   self.MonacoEnvironment = getMonacoEnvironment(baseUrl);
@@ -52,10 +87,14 @@ function initialize(init_code) {
       </div>`
   );
   let monaco_div = $("#monaco-it-editor");
+  let uri = workspace_dir_path
+    ? "file://" + require("path").join([workspace_dir_path, urlToFileName(current_language)])
+    : "inmemory://" + urlToFileName(current_language);
+  console.log("[monaco-it inject] use uri", uri);
   let monaco_model = monaco.editor.createModel(
     init_code,
     current_language,
-    monaco.Uri.parse("inmemory://model.json")
+    monaco.Uri.parse(uri)
   );
   let monaco_editor = monaco.editor.create(
     document.getElementById("monaco-it-editor"),
@@ -113,24 +152,35 @@ function initialize(init_code) {
   monaco_editor.onDidContentSizeChange(updateHeight);
   updateHeight();
 
+  // update file in language server when changed
+  monaco_editor.onDidChangeModelContent((e) => {});
+
   // currently use websocket
   let webSocket = null;
-  let enableLanguageService = supportedLanguages.includes(current_language);
+  enableLanguageService =
+    enableLanguageService && supportedLanguages.includes(current_language);
 
   // sync language from ace to monaco
   ace_editor_session.on("changeMode", () => {
     current_language = get_ace_language();
     console.log("change language to", current_language);
     monaco.editor.setModelLanguage(monaco_model, current_language);
-
-    if (current_language == "cpp" || current_language == "python")
-      enableLanguageService = true;
     if (webSocket) webSocket.close();
     if (enableLanguageService)
-      webSocket = connectServer(monaco_editor, current_language);
+      webSocket = connectServer(
+        monaco_editor,
+        current_language,
+        workspace_dir_path,
+        urlToFileName(current_language)
+      );
   });
 
   // connect to server
   if (enableLanguageService)
-    webSocket = connectServer(monaco_editor, current_language);
+    webSocket = connectServer(
+      monaco_editor,
+      current_language,
+      workspace_dir_path,
+      urlToFileName(current_language)
+    );
 }
