@@ -11,9 +11,3 @@ npm-debug.log*
 test
 *.json
 
-.idea
-.vscode
-*.yaml
-*workspace*
-*.pyc
-__pycache__
