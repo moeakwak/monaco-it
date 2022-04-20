@@ -16,6 +16,7 @@ except Exception:  # pylint: disable=broad-except
 
 log = logging.getLogger(__name__)
 
+
 class HomeRequestHandler(web.RequestHandler):
     def get(self):
         self.write("""
@@ -60,8 +61,10 @@ class FileRequestHandler(web.RequestHandler):
             code = self.args['code']
             with open(os.path.join(workspace_dir_path, filename), 'w') as f:
                 f.write(code)
-            log.info("update file {} with {} characters".format(filename, len(code)))
+            log.info("update file {} with {} characters".format(
+                filename, len(code)))
             self.finish()
+
 
 class LanguageServerWebSocketHandler(websocket.WebSocketHandler):
     writer = None
@@ -80,7 +83,8 @@ class LanguageServerWebSocketHandler(websocket.WebSocketHandler):
         log.info("Spawning {} subprocess".format(self.lang))
 
         # Create an instance of the language server
-        proc = process.Subprocess(self.commands[self.lang], stdin=subprocess.PIPE, stdout=subprocess.PIPE)
+        proc = process.Subprocess(
+            self.commands[self.lang], stdin=subprocess.PIPE, stdout=subprocess.PIPE)
 
         # Create a writer that formats json messages with the correct LSP headers
         self.writer = streams.JsonRpcStreamWriter(proc.stdin)
@@ -107,29 +111,44 @@ class LanguageServerWebSocketHandler(websocket.WebSocketHandler):
 
 
 if __name__ == "__main__":
+    welcome = "WebSocket Language Server For Monaco Editor"
+    print("*" * (len(welcome)) + "\n" + welcome + "\n" + "*" * (len(welcome)))
     parser = argparse.ArgumentParser()
-    parser.add_argument("-c", "--config", type=str, default="config.yaml")
+    parser.add_argument("-c", "--config", type=str,
+                        default="config.yaml", help="yaml configuration")
     args = parser.parse_args()
 
-    if not os.path.isfile(args.config):
-        print("config file {} not exits!".format(args.config))
+    config_path = os.path.join(os.path.dirname(
+        os.path.abspath(__file__)), args.config)
+
+    if not os.path.isfile(config_path):
+        log.error("config file {} not exits!".format(config_path))
         exit(1)
 
-    workspace_dir_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "cpp_workspace")
+    config = None
+    with open(config_path, 'r') as f:
+        config = yaml.safe_load(f)
+
+    workspace_dir_path = os.path.join(os.path.dirname(
+        os.path.abspath(__file__)), "cpp_workspace")
     if not os.path.exists(workspace_dir_path):
         os.makedirs(workspace_dir_path)
-
-    config = None
-    with open(args.config, 'r') as f:
-        config = yaml.safe_load(f)
+    
+    print("use config: {}\ncurrent workspace_dir_path: {}\n".format(config_path, workspace_dir_path))
 
     app = web.Application([
         (r"/", HomeRequestHandler),
         (r"/file", FileRequestHandler, dict(workspace_dir_path=workspace_dir_path)),
-        (r"/(.*)", LanguageServerWebSocketHandler, dict(commands=config['commands']))
+        (r"/(.*)", LanguageServerWebSocketHandler,
+         dict(commands=config['commands']))
     ])
-
-    print("Started Web Socket at ws://{}:{}/<lang>".format(config['host'], config['port']))
-    print("supported languages: ", " ".join(config['commands'].keys()))
+    print("all commands:\n" + "\n".join(
+        ["  - {}: {}".format(lang, " ".join(config['commands'][lang]))
+         for lang in config['commands'].keys()]
+    ))
+    print("\nStarted Web Socket at:\n" + "\n".join(
+        ["  - {}: ws://{}:{}/{}".format(lang, config['host'],
+                                        config['port'], lang) for lang in config['commands'].keys()])
+    )
     app.listen(config['port'], address=config['host'])
     ioloop.IOLoop.current().start()
