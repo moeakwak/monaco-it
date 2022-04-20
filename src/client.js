@@ -11,9 +11,13 @@ MonacoServices.install(monaco);
 
 import ReconnectingWebSocket from "reconnecting-websocket";
 import { listen } from "@codingame/monaco-jsonrpc";
-import { registerCompletion } from "./languageLoader";
+import { supportedLanguages, registerCompletion } from "./languageLoader";
 
 export function connectServer(monaco_editor, lang) {
+  if (!supportedLanguages.includes(lang)) {
+    return null;
+  }
+
   let webSocket = null;
 
   // create the web socket
@@ -80,7 +84,7 @@ function createWebSocket(url) {
     reconnectionDelayGrowFactor: 1.3,
     connectionTimeout: 10000,
     maxRetries: 0,
-    debug: false,
+    debug: true,
   };
   return new ReconnectingWebSocket(url, [], socketOptions);
 }
