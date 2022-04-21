@@ -7,16 +7,11 @@ import { getMonacoEnvironment } from "./utils";
 import { connectServer, getWorkspaceDirPath, updateFile } from "./client";
 import { supportedLanguages, registerLanguages } from "./languageLoader";
 
-import $, { get } from "jquery";
+import $ from "jquery";
 
-// localize zh-CN
-import { setLocaleData } from "monaco-editor-nls";
-import zh_CN from "monaco-editor-nls/locale/zh-hans";
-setLocaleData(zh_CN);
-const monaco = require("monaco-editor");
-
-// enable features in monacoUtils.js
 import "./monacoUtils";
+
+const monaco = require("monaco-editor/esm/vs/editor/editor.api");
 
 // register Monaco languages
 registerLanguages();
@@ -29,7 +24,7 @@ let ace_editor_session = ace_editor.getSession();
 ace_editor.on("change", (ev) => {
   // console.log("[monaco-it inject] ace_editor change", { code: getCurrentCode(), ev });
   ace_editor_div.trigger("ace-editor-change");
-})
+});
 
 let workspace_dir_path = null;
 
@@ -99,7 +94,8 @@ function getUri(lang) {
   if (!lang) lang = getCurrentLanguage();
   if (lang == "cpp" && !!workspace_dir_path)
     return (
-      "file://" + require("path").join(workspace_dir_path, getFileNameFromUrl(lang))
+      "file://" +
+      require("path").join(workspace_dir_path, getFileNameFromUrl(lang))
     );
   else return "inmemory://" + getFileNameFromUrl(lang);
 }
@@ -147,14 +143,14 @@ function initialize() {
     // recreate model
     // monaco_model.dispose();
     monaco_model = monaco.editor.getModel(monaco.Uri.parse(getUri()));
-    if (!monaco_model)
-      monaco_model = createModel();
+    if (!monaco_model) monaco_model = createModel();
     if (getCurrentLanguage() == "cpp")
       updateFile(getFileNameFromUrl(), getCurrentCode());
     monaco_editor.setModel(monaco_model);
     // workspace_dir_path = getWorkspaceDirPath();
     if (webSocket) webSocket.close();
     webSocket = connectServer(
+      monaco,
       monaco_editor,
       monaco_model,
       getCurrentLanguage(),
@@ -165,6 +161,7 @@ function initialize() {
 
   // connect to server
   webSocket = connectServer(
+    monaco,
     monaco_editor,
     monaco_model,
     getCurrentLanguage(),
@@ -175,6 +172,7 @@ function initialize() {
 
 const editorDefaultSettings = {
   automaticLayout: true,
+  codeLens: false,
   fontSize: 14,
   minimap: false,
   theme: "vs", // or vs-dark
@@ -202,17 +200,12 @@ function createEditor(
     ...settings,
   });
   // content height: min 400; disable inner scroll; grow with text
-  let ignoreEvent = false;
   const updateHeight = () => {
     let contentHeight = Math.min(1000, editor.getContentHeight());
     if (contentHeight < 400) contentHeight = 400;
     $(container).height(contentHeight);
-    try {
-      ignoreEvent = true;
-      editor.layout();
-    } finally {
-      ignoreEvent = false;
-    }
+
+    editor.layout();
   };
   editor.onDidContentSizeChange(updateHeight);
   updateHeight();
@@ -224,6 +217,8 @@ function createModel() {
   let lang = getCurrentLanguage();
   let uri = monaco.Uri.parse(getUri());
   let model = monaco.editor.createModel(code, lang, uri);
+
+  if (lang == "cpp") model.updateOptions({ tabSize: 4, indentSize: 4 });
 
   // sync code between monaco to ace
   let eventDisposable = null;

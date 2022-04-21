@@ -1,4 +1,4 @@
-const monaco = require("monaco-editor");
+// const monaco = require("monaco-editor");
 const {
   MonacoLanguageClient,
   CloseAction,
@@ -18,6 +18,7 @@ let languageWebSocket = null;
 let fileWebSocket = null;
 
 export function connectServer(
+  _monaco,
   monaco_editor,
   monaco_model,
   lang,
@@ -29,11 +30,11 @@ export function connectServer(
   }
 
   if (lang == "cpp")
-    MonacoServices.install(monaco, {
+    MonacoServices.install(_monaco, {
       rootUri: workspace_dir_path,
     });
   else
-    MonacoServices.install(monaco);
+    MonacoServices.install(_monaco);
 
   // create the web socket
   let url = "ws://" + serverHost + "/" + lang;
