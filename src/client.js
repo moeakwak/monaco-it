@@ -11,6 +11,7 @@ import ReconnectingWebSocket from "reconnecting-websocket";
 import { listen } from "@codingame/monaco-jsonrpc";
 import { supportedLanguages, registerCompletion } from "./languageLoader";
 
+
 const serverHost = "localhost:3000";
 
 let languageWebSocket = null;
@@ -23,7 +24,7 @@ export function connectServer(
   workspace_dir_path,
   filename
 ) {
-  if (!supportedLanguages.includes(lang)) {
+  if (!supportedLanguages.includes(lang) || !workspace_dir_path) {
     return null;
   }
 
@@ -31,6 +32,8 @@ export function connectServer(
     MonacoServices.install(monaco, {
       rootUri: workspace_dir_path,
     });
+  else
+    MonacoServices.install(monaco);
 
   // create the web socket
   let url = "ws://" + serverHost + "/" + lang;
@@ -49,7 +52,7 @@ export function connectServer(
     webSocket: languageWebSocket,
     onConnection: (connection) => {
       // create and start the language client
-      const languageClient = createLanguageClient(connection);
+      const languageClient = createLanguageClient(connection, lang);
       const disposable = languageClient.start();
       connection.onClose(() => {
         disposable.dispose();
@@ -62,15 +65,10 @@ export function connectServer(
         `[monaco-it client] connected to "${url}" and started the language client for ${lang}.`
       );
       registerCompletion(monaco_editor, lang, true);
-      // let monaco_model = monaco_editor.getModel(
-      //   monaco.Uri.parse(
-      //     "file://" + require("path").join(workspace_dir_path, filename)
-      //   )
-      // );
       monaco_model.onDidChangeContent((e) => {
-        if (languageWebSocket.readyState === WebSocket.OPEN) {
+        if (lang == "cpp" && languageWebSocket.readyState === WebSocket.OPEN) {
           console.log("[monaco-it client] try to update file");
-          updateFile(filename, monaco_editor.getModel().getValue());
+          updateFile(filename, monaco_model.getValue());
         }
       });
     },
@@ -125,12 +123,12 @@ export function updateFile(filename, code) {
   }
 }
 
-function createLanguageClient(connection) {
+function createLanguageClient(connection, lang) {
   return new MonacoLanguageClient({
     name: "Monaco Language Client",
     clientOptions: {
       // use a language id as a document selector
-      documentSelector: ["cpp"],
+      documentSelector: [lang],
       // disable the default error handler
       errorHandler: {
         error: () => ErrorAction.Continue,

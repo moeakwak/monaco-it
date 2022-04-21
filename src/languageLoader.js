@@ -17,9 +17,9 @@ export function registerCompletion(editor, lang, enableLanguageService) {
 
   // dispose completionItemProvider if it exists
   if (lang in completionItemProviders && !!completionItemProviders[lang]) {
+    console.log("[monaco-it] dispose completionItemProvider:", completionItemProviders[lang]);
     completionItemProviders[lang].dispose();
     completionItemProviders[lang] = null;
-    console.log("[monaco-it] dispose", completionItemProviders[lang]);
   }
 
   completionItemProviders[lang] =

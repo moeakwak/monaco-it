@@ -4,5 +4,6 @@
             "chrome",
             "jquery"
         ]
-    }
+    },
+    "exclude": ["node_modules", "build", "server"]
 }
