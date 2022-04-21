@@ -1,4 +1,9 @@
-const monaco = require("monaco-editor");
+// localize zh-CN
+import { setLocaleData } from "monaco-editor-nls";
+import zh_CN from "monaco-editor-nls/locale/zh-hans";
+setLocaleData(zh_CN);
+
+const monaco = require("monaco-editor/esm/vs/editor/editor.api");
 
 // there must exists lang.js in languages folder, if supportedLanguages includes lang
 export const supportedLanguages = ["python", "cpp"];
