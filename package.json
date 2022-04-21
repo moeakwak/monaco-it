@@ -4,7 +4,8 @@
   "private": true,
   "scripts": {
     "watch": "webpack --mode=development --watch --config config/webpack.config.js",
-    "build": "webpack --mode=production --config config/webpack.config.js"
+    "build": "webpack --mode=production --config config/webpack.config.js",
+    "release": "rm -rf build && npm run build && zip -r monaco-it-extension-${npm_package_version}.zip build"
   },
   "devDependencies": {
     "@babel/core": "^7.17.9",
