@@ -9,11 +9,11 @@
 - 选项页面里面，把编辑器设置里 theme 改成 vs-dark 可以启用暗黑模式
 
 编辑器的使用和 VSCode 差不多，参考 https://code.visualstudio.com/shortcuts/keyboard-shortcuts-windows.pdf
+
 - Ctrl + F 搜索/替换，可以用正则表达式
 - Alt + Shift + F 自动格式化
-- F1 调出菜单面板
 
-如果连上了 Server，右键菜单会有更多选项。
+更多的操作和快捷键，可以按 F1 调出菜单面板来查看。如果连上了 Server，右键菜单会有更多选项。
 
 ## 代码提示和自动补全
 

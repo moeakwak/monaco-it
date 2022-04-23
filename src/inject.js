@@ -29,7 +29,6 @@ ace_editor.on("change", (ev) => {
   ace_editor_div.trigger("ace-editor-change");
 });
 
-let rootUri = null;
 let languageWebSocket = null;
 
 function getCurrentLanguage() {
@@ -47,9 +46,7 @@ function isReadOnly() {
 }
 
 export function isEnableLanguageService() {
-  return (
-    options.enableLanguageServer && !isReadOnly()
-  );
+  return options.enableLanguageServer && !isReadOnly();
 }
 
 function getFileNameFromUrl(lang) {
@@ -78,23 +75,30 @@ function getUri(lang) {
   else return "inmemory://" + getFileNameFromUrl(lang);
 }
 
-getRootUri(
-  (response) => {
-    rootUri = response.data;
-    console.log(
-      "[monaco-it inject] connect language serve success, rootUri:",
-      rootUri
-    );
-    if (getCurrentLanguage() == "cpp")
-      updateFile(getFileNameFromUrl(), getAceContent());
-    initialize(ace_editor.getValue());
-  },
-  (response) => {
-    rootUri = null;
-    console.log("[monaco-it inject] connect language serve failed:", response);
-    initialize(ace_editor.getValue());
-  }
-);
+let rootUri = null;
+
+if (options.enableLanguageServer)
+  getRootUri(
+    (response) => {
+      rootUri = response.data;
+      console.log(
+        "[monaco-it inject] connect language serve success, rootUri:",
+        rootUri
+      );
+      if (getCurrentLanguage() == "cpp")
+        updateFile(getFileNameFromUrl(), getAceContent());
+      initialize(ace_editor.getValue());
+    },
+    (response) => {
+      rootUri = null;
+      console.log(
+        "[monaco-it inject] connect language serve failed:",
+        response
+      );
+      initialize(ace_editor.getValue());
+    }
+  );
+else initialize(ace_editor.getValue());
 
 function initialize() {
   // avoid CROS
