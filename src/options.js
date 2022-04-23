@@ -8,7 +8,7 @@ export const defaultOptions = {
   enableLanguageServer: false,
   editorLocale: "en_US",
   editorOptions: {
-    theme: "vs", // or vs-dark
+    theme: "vs-dark", // vs or vs-dark
     fontSize: 14,
     quickSuggestionsDelay: 10,
     codeLens: false,

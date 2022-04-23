@@ -2,12 +2,14 @@
 
 Monaco It is a chrome extension which helps change ace editor to monaco editor, supporting all features including autocompletes.
 
+[一些中文说明](./README_cn.md)
+
 ## Supported Languages
 
 If enable language service (intellisense), keywords and token autocompletion will not registered.
 
 - `html`, `css`, `javascript`, `typescript`: monaco editor supports intellisense
-- `c`, `c++`: intellisense (need clangd), snippets, keywords
+- `c`, `c++`: intellisense (need ccls), snippets, keywords
 - `python`: intellisense (need pyls), snippets, keywords
 - all languages: monaco editor supports hightlight and simple completion
 
