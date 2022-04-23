@@ -1,10 +1,13 @@
 // localize zh-CN
-const options = JSON.parse(document.head.dataset.monacoItOptions);
 import { setLocaleData } from "monaco-editor-nls";
 import zh_CN from "monaco-editor-nls/locale/zh-hans";
-if (options.editorLocale == "zh_CN") {
-  setLocaleData(zh_CN);
+if (document.head.dataset.monacoItOptions) {
+  let options = JSON.parse(document.head.dataset.monacoItOptions);
+  if (options.editorLocale == "zh_CN") {
+    setLocaleData(zh_CN);
+  }
 }
+
 const monaco = require("monaco-editor/esm/vs/editor/editor.api");
 
 // there must exists lang.js in languages folder, if supportedLanguages includes lang

@@ -48,7 +48,7 @@ function isReadOnly() {
 
 export function isEnableLanguageService() {
   return (
-    options.enableLanguageServer == "yes" && !isReadOnly()
+    options.enableLanguageServer && !isReadOnly()
   );
 }
 
