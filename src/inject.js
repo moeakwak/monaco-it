@@ -5,10 +5,8 @@ __webpack_public_path__ = document.head.dataset.monacoItPublicPath;
 
 import { getMonacoEnvironment } from "./utils";
 import { connectServer, getRootUri as getRootUri, updateFile } from "./client";
-import {
-  registerLanguages,
-  registerCompletion,
-} from "./languageLoader";
+import { registerLanguages, registerCompletion } from "./languageLoader";
+import { defaultEditorOptions } from "./options";
 
 import $ from "jquery";
 
@@ -105,10 +103,14 @@ function initialize() {
     getCurrentLanguage()
   );
   let monaco_model = createModel();
+  let editorOptions = !!document.head.dataset.monacoItEditorOptions
+    ? JSON.parse(document.head.dataset.monacoItEditorOptions)
+    : undefined;
   let monaco_editor = createEditor(
     document.getElementById("monaco-it-editor"),
     monaco_model,
-    isReadOnly()
+    isReadOnly(),
+    editorOptions
   );
   monaco_editor.layout();
   console.log("[monaco-it] monaco editor created", monaco_editor, monaco_model);
@@ -150,15 +152,15 @@ function tryConnectServer(editor, model) {
         console.log("[monaco-it inject] successfully get rootUri:", rootUri);
         if (getCurrentLanguage() == "cpp")
           updateFile(getFileNameFromUrl(), getAceContent());
-          languageWebSocket = connectServer(
-            monaco,
-            editor,
-            model,
-            getCurrentLanguage(),
-            rootUri,
-            getFileNameFromUrl()
-          );
-          registerCompletion(editor, getCurrentLanguage(), true);
+        languageWebSocket = connectServer(
+          monaco,
+          editor,
+          model,
+          getCurrentLanguage(),
+          rootUri,
+          getFileNameFromUrl()
+        );
+        registerCompletion(editor, getCurrentLanguage(), true);
       },
       (response) => {
         rootUri = null;
@@ -169,28 +171,10 @@ function tryConnectServer(editor, model) {
 }
 
 function createEditor(container, model, readOnly = false, settings) {
-  const editorDefaultSettings = {
-    automaticLayout: true,
-    codeLens: false,
-    fontSize: 14,
-    minimap: false,
-    theme: "vs", // or vs-dark
-    scrollBeyondLastLine: false,
-    wordWrap: "on",
-    wrappingStrategy: "advanced",
-    minimap: {
-      enabled: false,
-    },
-    scrollbar: {
-      alwaysConsumeMouseWheel: false,
-    },
-    overviewRulerLanes: 0,
-    quickSuggestionsDelay: 5,
-  };
   let editor = monaco.editor.create(container, {
     model,
     readOnly,
-    ...(settings || editorDefaultSettings),
+    ...(settings || defaultEditorOptions),
   });
   // content height: min 400; disable inner scroll; grow with text
   const updateHeight = () => {

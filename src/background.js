@@ -1,8 +1,7 @@
 "use strict";
-import $ from "jquery";
 
 chrome.runtime.onInstalled.addListener(() => {
-  chrome.runtime.openOptionsPage();
+    chrome.runtime.openOptionsPage();
 });
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
