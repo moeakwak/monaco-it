@@ -41,10 +41,4 @@ We provide a language server, which supports `c++` and `python` experimentally: 
 
 It needs WebSocket to connect local language server and sync files, and may be blocked because of Conetent Script Policy.
 
-That is to say, if the website use a strict Conetent Script Policy and cross-origin WebSocket is disabled, then it will not work.
-
-### Files And Caches
-
-`ccls` or `clangd` needs file sycronized to server, so MonacoIt uses WebSocket to update files.
-
-Files will be saved and updated in `server/cpp_workspace`, named by url. You can manually remove them if not used.
+Mostly, you can use SSL connection (`wss://` instead of `ws://`) to solve this problem.
