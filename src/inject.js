@@ -6,13 +6,15 @@ __webpack_public_path__ = document.head.dataset.monacoItPublicPath;
 import { getMonacoEnvironment } from "./utils";
 import { connectServer, getRootUri as getRootUri, updateFile } from "./client";
 import { registerLanguages, registerCompletion } from "./languageLoader";
-import { defaultEditorOptions } from "./options";
+import { defaultOptions } from "./options";
 
 import $ from "jquery";
 
 import "./monacoUtils";
 
 const monaco = require("monaco-editor/esm/vs/editor/editor.api");
+
+const options = JSON.parse(document.head.dataset.monacoItOptions);
 
 // register Monaco languages
 registerLanguages();
@@ -46,17 +48,9 @@ function isReadOnly() {
 
 export function isEnableLanguageService() {
   return (
-    document.head.dataset.monacoEnableLanguageServer == "yes" && !isReadOnly()
+    options.enableLanguageServer == "yes" && !isReadOnly()
   );
 }
-
-// initialize
-console.log(
-  "[monaco-it inject] start initialize, init language: ",
-  getCurrentLanguage()
-);
-
-initialize(ace_editor.getValue());
 
 function getFileNameFromUrl(lang) {
   if (!lang) lang = getCurrentLanguage();
@@ -84,6 +78,24 @@ function getUri(lang) {
   else return "inmemory://" + getFileNameFromUrl(lang);
 }
 
+getRootUri(
+  (response) => {
+    rootUri = response.data;
+    console.log(
+      "[monaco-it inject] connect language serve success, rootUri:",
+      rootUri
+    );
+    if (getCurrentLanguage() == "cpp")
+      updateFile(getFileNameFromUrl(), getAceContent());
+    initialize(ace_editor.getValue());
+  },
+  (response) => {
+    rootUri = null;
+    console.log("[monaco-it inject] connect language serve failed:", response);
+    initialize(ace_editor.getValue());
+  }
+);
+
 function initialize() {
   // avoid CROS
   let baseUrl = $("head").attr("data-monaco-editor-public-path");
@@ -103,9 +115,7 @@ function initialize() {
     getCurrentLanguage()
   );
   let monaco_model = createModel();
-  let editorOptions = !!document.head.dataset.monacoItEditorOptions
-    ? JSON.parse(document.head.dataset.monacoItEditorOptions)
-    : undefined;
+  let editorOptions = options.editorOptions;
   let monaco_editor = createEditor(
     document.getElementById("monaco-it-editor"),
     monaco_model,
@@ -132,7 +142,6 @@ function initialize() {
     if (!monaco_model) monaco_model = createModel();
     if (getCurrentLanguage() == "cpp")
       updateFile(getFileNameFromUrl(), getAceContent());
-
     if (disposeSync != null) disposeSync();
     monaco_editor.setModel(monaco_model);
     disposeSync = setCodeSyncHandler(monaco_editor);
@@ -144,37 +153,28 @@ function initialize() {
 }
 
 function tryConnectServer(editor, model) {
-  // try to connect language server
-  if (isEnableLanguageService())
-    getRootUri(
-      (response) => {
-        rootUri = response.data;
-        console.log("[monaco-it inject] successfully get rootUri:", rootUri);
-        if (getCurrentLanguage() == "cpp")
-          updateFile(getFileNameFromUrl(), getAceContent());
-        languageWebSocket = connectServer(
-          monaco,
-          editor,
-          model,
-          getCurrentLanguage(),
-          rootUri,
-          getFileNameFromUrl()
-        );
-        registerCompletion(editor, getCurrentLanguage(), true);
-      },
-      (response) => {
-        rootUri = null;
-        console.warn("[monaco-it inject] failed to get rootUri", response);
-        registerCompletion(editor, getCurrentLanguage(), false);
-      }
-    );
+  if (!isEnableLanguageService() || !rootUri) {
+    registerCompletion(editor, getCurrentLanguage(), false);
+    return;
+  }
+  if (getCurrentLanguage() == "cpp")
+    updateFile(getFileNameFromUrl(), getAceContent());
+  languageWebSocket = connectServer(
+    monaco,
+    editor,
+    model,
+    getCurrentLanguage(),
+    rootUri,
+    getFileNameFromUrl()
+  );
+  registerCompletion(editor, getCurrentLanguage(), true);
 }
 
 function createEditor(container, model, readOnly = false, settings) {
   let editor = monaco.editor.create(container, {
     model,
     readOnly,
-    ...(settings || defaultEditorOptions),
+    ...(settings || defaultOptions.editorOptions),
   });
   // content height: min 400; disable inner scroll; grow with text
   const updateHeight = () => {
@@ -202,12 +202,12 @@ function debugContent(editor) {
 
 function setCodeSyncHandler(editor) {
   let disposable = null;
-  console.log("   ** setCodeSyncHandler", debugContent(editor));
+  // console.log("   ** setCodeSyncHandler", debugContent(editor));
   let func = (event) => {
     // monaco -> ace
     ace_editor_div.off("ace-editor-change");
     ace_editor.setValue(editor.getModel().getValue());
-    console.log("   sync monaco code to ace", event, debugContent(editor));
+    // console.log("   sync monaco code to ace", event, debugContent(editor));
     // ace -> monaco
     ace_editor_div.on("ace-editor-change", (e) => {
       if (getAceContent().length != 0) {

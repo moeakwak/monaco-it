@@ -3,30 +3,28 @@
 import $ from "jquery";
 import { getRootUri } from "./client";
 
-export const defaultLanguageServerUrl = "ws://127.0.0.1:3000";
-export const defaultEnableLanguageServer = false;
-export const defaultEditorOptions = {
-  theme: "vs", // or vs-dark
-  fontSize: 14,
-  quickSuggestionsDelay: 10,
-  codeLens: false,
-  minimap: false,
-  scrollBeyondLastLine: false,
-  wordWrap: "on",
-  wrappingStrategy: "advanced",
-  minimap: {
-    enabled: false,
-  },
-  scrollbar: {
-    alwaysConsumeMouseWheel: false,
-  },
-  automaticLayout: true,
-  overviewRulerLanes: 0,
-};
 export const defaultOptions = {
-  languageServerUrl: defaultLanguageServerUrl,
-  enableLanguageServer: defaultEnableLanguageServer,
-  editorOptions: defaultEditorOptions,
+  languageServerUrl: "ws://127.0.0.1:3000",
+  enableLanguageServer: false,
+  editorLocale: "en_US",
+  editorOptions: {
+    theme: "vs", // or vs-dark
+    fontSize: 14,
+    quickSuggestionsDelay: 10,
+    codeLens: false,
+    minimap: false,
+    scrollBeyondLastLine: false,
+    wordWrap: "on",
+    wrappingStrategy: "advanced",
+    minimap: {
+      enabled: false,
+    },
+    scrollbar: {
+      alwaysConsumeMouseWheel: false,
+    },
+    automaticLayout: true,
+    overviewRulerLanes: 0,
+  },
 };
 
 // Saves options to chrome.storage
@@ -41,6 +39,7 @@ function save_options() {
   }
   let options = {
     languageServerUrl: $("#languageServerUrl").val(),
+    editorLocale: $("input[name='editorLocale']:checked").val(),
     enableLanguageServer:
       $("input[name='enableLanguageServer']:checked").val() == "true",
     editorOptions,
@@ -54,11 +53,13 @@ function save_options() {
 // Restores select box and checkbox state using the preferences
 // stored in chrome.storage.
 function restore_options() {
-  // Use default value color = 'red' and likesColor = true.
   chrome.storage.local.get(defaultOptions, function (items) {
     console.log(items);
     $("input[name='enableLanguageServer']")
       .filter("[value='" + items.enableLanguageServer + "']")
+      .attr("checked", true);
+    $("input[name='editorLocale']")
+      .filter("[value='" + items.editorLocale + "']")
       .attr("checked", true);
     $("#languageServerUrl").val(items.languageServerUrl);
     $("#editor-options").val(JSON.stringify(items.editorOptions, null, 4));

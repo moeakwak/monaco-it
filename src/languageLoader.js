@@ -1,8 +1,10 @@
 // localize zh-CN
+const options = JSON.parse(document.head.dataset.monacoItOptions);
 import { setLocaleData } from "monaco-editor-nls";
 import zh_CN from "monaco-editor-nls/locale/zh-hans";
-setLocaleData(zh_CN);
-
+if (options.editorLocale == "zh_CN") {
+  setLocaleData(zh_CN);
+}
 const monaco = require("monaco-editor/esm/vs/editor/editor.api");
 
 // there must exists lang.js in languages folder, if supportedLanguages includes lang
@@ -17,12 +19,15 @@ export function registerCompletion(editor, lang, enableLanguageService) {
     console.log("[monaco-it] registerCompletion not support:", lang);
     return;
   }
-  
+
   console.log("[monaco-it] registerCompletion:", lang, enableLanguageService);
 
   // dispose completionItemProvider if it exists
   if (lang in completionItemProviders && !!completionItemProviders[lang]) {
-    console.log("[monaco-it] dispose completionItemProvider:", completionItemProviders[lang]);
+    console.log(
+      "[monaco-it] dispose completionItemProvider:",
+      completionItemProviders[lang]
+    );
     completionItemProviders[lang].dispose();
     completionItemProviders[lang] = null;
   }
@@ -134,11 +139,11 @@ function handleRange(range, rangeRule = "replaceCurrentWord") {
 const identifierPattern = "([a-zA-Z_]\\w*)";
 
 function getTokens(code) {
-    let identifier = new RegExp(identifierPattern, "g");
-    let tokens = [];
-    let array1;
-    while ((array1 = identifier.exec(code)) !== null) {
-        tokens.push(array1[0]);
-    }
-    return Array.from(new Set(tokens));
+  let identifier = new RegExp(identifierPattern, "g");
+  let tokens = [];
+  let array1;
+  while ((array1 = identifier.exec(code)) !== null) {
+    tokens.push(array1[0]);
+  }
+  return Array.from(new Set(tokens));
 }

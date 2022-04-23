@@ -11,10 +11,12 @@ import ReconnectingWebSocket from "reconnecting-websocket";
 import { listen } from "@codingame/monaco-jsonrpc";
 import { supportedLanguages, registerCompletion } from "./languageLoader";
 
-const serverHost = document.head.dataset.monacoIdServerAddress;
+function getServerUrl() {
+  return JSON.parse(document.head.dataset.monacoItOptions).languageServerUrl;
+}
 
 function getUrl(target, host) {
-  return new URL("/" + target, host || serverHost).href;
+  return new URL("/" + target, host || getServerUrl()).href;
 }
 
 let languageWebSocket = null;
@@ -87,7 +89,7 @@ export function connectServer(
 }
 
 export function getRootUri(success_cb, error_cb, host) {
-  let url = getUrl("file", host || serverHost);
+  let url = getUrl("file", host || getServerUrl());
   let webSocket = null;
   try {
     webSocket = new WebSocket(url);
@@ -123,7 +125,7 @@ export function updateFile(filename, code) {
   } else {
     fileWebSocket = new WebSocket(url);
     fileWebSocket.onopen = (ev) => {
-      fileWebSocket.send(JSON.stringify({ type: "update", filename, code }));
+      ev.target.send(JSON.stringify({ type: "update", filename, code }));
     };
     fileWebSocket.onclose = (ev) => {
       console.warn("[monaco-it client] fileWebSocket closed:", filename, ev);
