@@ -11,8 +11,11 @@ import ReconnectingWebSocket from "reconnecting-websocket";
 import { listen } from "@codingame/monaco-jsonrpc";
 import { supportedLanguages, registerCompletion } from "./languageLoader";
 
+const serverHost = document.head.dataset.monacoIdServerAddress;
 
-const serverHost = "localhost:3000";
+function getUrl(target, host) {
+  return new URL("/" + target, host || serverHost).href;
+}
 
 let languageWebSocket = null;
 let fileWebSocket = null;
@@ -22,24 +25,29 @@ export function connectServer(
   monaco_editor,
   monaco_model,
   lang,
-  workspace_dir_path,
+  rootUri,
   filename
 ) {
-  if (!supportedLanguages.includes(lang) || !workspace_dir_path) {
+  if (!supportedLanguages.includes(lang) || !rootUri) {
     return null;
   }
 
   if (lang == "cpp")
     MonacoServices.install(_monaco, {
-      rootUri: workspace_dir_path,
+      rootUri,
     });
-  else
-    MonacoServices.install(_monaco);
+  else MonacoServices.install(_monaco);
 
   // create the web socket
-  let url = "ws://" + serverHost + "/" + lang;
+  let url = getUrl(lang);
   console.log("[monaco-it client] try to connect language server at", url);
-  languageWebSocket = createWebSocket(url);
+  try {
+    languageWebSocket = createWebSocket(url);
+  } catch (error) {
+    console.log("[monaco-it client] languageWebSocket error:", error);
+    registerCompletion(monaco_editor, lang, false);
+    return;
+  }
 
   languageWebSocket.onclose = () => {
     console.log(
@@ -68,7 +76,7 @@ export function connectServer(
       registerCompletion(monaco_editor, lang, true);
       monaco_model.onDidChangeContent((e) => {
         if (lang == "cpp" && languageWebSocket.readyState === WebSocket.OPEN) {
-          console.log("[monaco-it client] try to update file");
+          // console.log("[monaco-it client] try to update file");
           updateFile(filename, monaco_model.getValue());
         }
       });
@@ -78,12 +86,19 @@ export function connectServer(
   return languageWebSocket;
 }
 
-export function getWorkspaceDirPath(success_cb, error_cb) {
-  let url = "ws://" + serverHost + "/file";
-  let webSocket = new WebSocket(url);
+export function getRootUri(success_cb, error_cb, host) {
+  let url = getUrl("file", host || serverHost);
+  let webSocket = null;
+  try {
+    webSocket = new WebSocket(url);
+  } catch (error) {
+    console.warn("[monaco-it client] getRootUri error:", error);
+    error_cb(error);
+    return;
+  }
   let closed = false;
   webSocket.onopen = () => {
-    webSocket.send(JSON.stringify({ type: "get_workspace_dir_path" }));
+    webSocket.send(JSON.stringify({ type: "get_rootUri" }));
   };
   webSocket.onclose = (ev) => {
     if (!closed) error_cb(ev);
@@ -101,7 +116,7 @@ export function getWorkspaceDirPath(success_cb, error_cb) {
 }
 
 export function updateFile(filename, code) {
-  let url = "ws://" + serverHost + "/file";
+  let url = getUrl("file");
   if (!!fileWebSocket && fileWebSocket.readyState == fileWebSocket.OPEN) {
     // reuse opening fileWebSocket
     fileWebSocket.send(JSON.stringify({ type: "update", filename, code }));
@@ -116,7 +131,7 @@ export function updateFile(filename, code) {
     fileWebSocket.onmessage = (ev) => {
       let message = JSON.parse(ev.data);
       if (message.result == "ok") {
-        console.log("[monaco-it client] update file success:", filename);
+        // console.log("[monaco-it client] update file success:", filename);
       } else {
         console.warn("[monaco-it client] update file failed:", ev);
       }

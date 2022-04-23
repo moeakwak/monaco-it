@@ -10,7 +10,19 @@ if (ace_editor_div.length) {
     ace_editor_div,
     chrome.runtime.getURL("")
   );
-  document.head.dataset.monacoItPublicPath = chrome.runtime.getURL("");
-  $("head").attr("data-monaco-editor-public-path", chrome.runtime.getURL(""));
-  chrome.runtime.sendMessage("inject-script");
+
+  chrome.storage.local.get(
+    ["enableLanguageServer", "languageServerAddress"],
+    (items) => {
+      document.head.dataset.monacoIdServerAddress = items.languageServerAddress;
+      document.head.dataset.monacoEnableLanguageServer = (items.enableLanguageServer ? "yes" : "no");
+      document.head.dataset.monacoItPublicPath = chrome.runtime.getURL("");
+      // $("head").attr(
+      //   "data-monaco-editor-public-path",
+      //   chrome.runtime.getURL("")
+      // );
+      chrome.runtime.sendMessage("inject-script");
+      console.log("[monaco-it cs] inject script, options:", items);
+    }
+  );
 }

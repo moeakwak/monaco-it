@@ -35,23 +35,7 @@ Assuming you're going to add support for language called "lang":
 
 ## Intellisense (Language Server)
 
-To enable language server, MonacoIt provide a `server.py` to provide language server. It supports c++ and python experimentally.
-
-### Usage
-
-`clangd` or `ccls` is needed for c++, and `pyls` is needed for python.
-
-create `config.yaml`, install all dependencies and run `server.py`.
-
-### Formatting
-
-To configure formatting in `ccls`, just add `.clang-format` in `server/cpp_workspace`:
-
-```
-BasedOnStyle: Google
-IndentWidth: 4
-SortIncludes: false
-```
+We provide a language server, which supports `c++` and `python` experimentally: https://github.com/moeakwak/monaco-language-server
 
 ### Limitation
 

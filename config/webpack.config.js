@@ -17,6 +17,7 @@ const config = (env, argv) =>
       contentScript: PATHS.src + "/contentScript.js",
       background: PATHS.src + "/background.js",
       inject: PATHS.src + "/inject.js",
+      options: PATHS.src + "/options.js",
     },
     devtool: argv.mode === "production" ? false : "source-map",
     module: {
