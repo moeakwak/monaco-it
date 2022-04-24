@@ -12,7 +12,7 @@
   <body>
     <div>
       <p><a href="https://github.com/moeakwak/monaco-it">Github</a></p>
-      <h2>MonacoIt Options</h2>
+      <h2>Monaco It Options (version 0.4.2)</h2>
       <p>
         Locale:
         <input type="radio" name="editorLocale" value="zh_CN" />zh_CN
@@ -59,7 +59,16 @@
         >
         for more info.
       </p>
-      <p>Available theme: "vs" or "vs-dark".</p>
+
+      <div>
+        Themes Option:
+        <input type="radio" name="theme" value="light-plus" />light-plus
+        <input type="radio" name="theme" value="dark-plus" />dark-plus
+        (recommand) <input type="radio" name="theme" value="vs" />vs
+        <input type="radio" name="theme" value="vs-dark" />vs-dark
+      </div>
+      <p style="color: gray;">Note: If something goes wrong, use "vs" or "vs-dark".</p>
+      <p>Font Size: <input type="text" id="font-size" style="width: 30px" /></p>
       <textarea
         id="editor-options"
         style="width: 100%; min-height: 300px"

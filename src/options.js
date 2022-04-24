@@ -8,7 +8,7 @@ export const defaultOptions = {
   enableLanguageServer: false,
   editorLocale: "en_US",
   editorOptions: {
-    theme: "vs-dark", // vs or vs-dark
+    theme: "dark-plus",
     fontSize: 14,
     quickSuggestionsDelay: 10,
     codeLens: false,
@@ -62,7 +62,11 @@ function restore_options() {
       .filter("[value='" + items.editorLocale + "']")
       .attr("checked", true);
     $("#languageServerUrl").val(items.languageServerUrl);
+    $("#font-size").val(items.editorOptions.fontSize);
     $("#editor-options").val(JSON.stringify(items.editorOptions, null, 4));
+    $("input[name='theme']")
+      .filter("[value='" + items.editorOptions.theme + "']")
+      .attr("checked", true);
   });
 }
 
@@ -85,10 +89,34 @@ function testServer() {
   );
 }
 
+function setEditorOptionsItem(item, val, cb) {
+  let editorOptions = null;
+  try {
+    editorOptions = JSON.parse($("#editor-options").val());
+  } catch (error) {
+    alert("Wrong options JSON content!" + error);
+    return;
+  }
+  editorOptions[item] = val;
+  $("#editor-options").val(JSON.stringify(editorOptions, null, 4));
+}
+
 $("#save").on("click", save_options);
 $("#test").on("click", testServer);
 $("#reset").on("click", () => {
   chrome.storage.local.set(defaultOptions, restore_options);
+});
+
+$("input[name='theme']").on("click", (e) => {
+  let theme = $(e.currentTarget).val();
+  setEditorOptionsItem("theme", theme);
+});
+
+$("#font-size").on("input", (e) => {
+  let size = $(e.currentTarget).val();
+  size = parseInt(size);
+  if (!size) return;
+  setEditorOptionsItem("fontSize", size);
 });
 
 document.addEventListener("DOMContentLoaded", restore_options);
