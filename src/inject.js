@@ -209,7 +209,7 @@ async function createEditor(container, model, readOnly = false, settings) {
   });
   // content height: min 400; disable inner scroll; grow with text
   const updateHeight = () => {
-    let contentHeight = Math.min(1000, editor.getContentHeight());
+    let contentHeight = editor.getContentHeight();
     if (contentHeight < 400) contentHeight = 400;
     $(container).height(contentHeight);
 
