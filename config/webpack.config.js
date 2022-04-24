@@ -70,7 +70,24 @@ const config = (env, argv) =>
       ],
     },
     plugins: [
-      new MonacoWebpackPlugin({}),
+      new MonacoWebpackPlugin({
+        languages: [
+          "html",
+          "markdown",
+          "css",
+          // "scss",
+          // "less",
+          "javascript",
+          "typescript",
+          "c",
+          "cpp",
+          'python',
+          "json",
+          "java",
+          "golang",
+        ],
+        // features: ["!gotoSymbol"],
+      }),
       new webpack.ProvidePlugin({
         Buffer: ["buffer", "Buffer"],
       }),
@@ -78,9 +95,9 @@ const config = (env, argv) =>
         process: "process/browser",
       }),
       new webpack.ProvidePlugin({
-        setImmediate: ['setimmediate', 'setImmedate'],
-        clearImmediate: ['setimmediate', 'clearImmedate']
-     }),
+        setImmediate: ["setimmediate", "setImmedate"],
+        clearImmediate: ["setimmediate", "clearImmedate"],
+      }),
     ],
     resolve: {
       fallback: {

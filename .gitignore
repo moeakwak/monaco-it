@@ -9,6 +9,5 @@
 
 npm-debug.log*
 test
-*.json
 
 *.zip

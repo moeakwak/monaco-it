@@ -3,12 +3,21 @@
 // use chrome-extension path for webpack chunks
 __webpack_public_path__ = document.head.dataset.monacoItPublicPath;
 
-import { getMonacoEnvironment } from "./utils";
-import { connectServer, getRootUri as getRootUri, updateFile } from "./client";
-import { registerLanguages, registerCompletion } from "./languageLoader";
-import { defaultOptions } from "./options";
+export const extBaseUrl = document.head.dataset.monacoItPublicPath;
 
 import $ from "jquery";
+
+import { connectServer, getRootUri as getRootUri, updateFile } from "./client";
+import {
+  registerLanguages,
+  registerCompletion,
+  getRegistry,
+  grammars,
+} from "./languageLoader";
+import { defaultOptions } from "./options";
+
+import { loadWASM } from "onigasm";
+import { wireTmGrammars } from "monaco-editor-textmate";
 
 import "./monacoUtils";
 
@@ -77,30 +86,32 @@ function getUri(lang) {
 
 let rootUri = null;
 
-if (options.enableLanguageServer)
-  getRootUri(
-    (response) => {
-      rootUri = response.data;
-      console.log(
-        "[monaco-it inject] connect language serve success, rootUri:",
-        rootUri
-      );
-      if (getCurrentLanguage() == "cpp")
-        updateFile(getFileNameFromUrl(), getAceContent());
-      initialize(ace_editor.getValue());
-    },
-    (response) => {
-      rootUri = null;
-      console.log(
-        "[monaco-it inject] connect language serve failed:",
-        response
-      );
-      initialize(ace_editor.getValue());
-    }
-  );
-else initialize(ace_editor.getValue());
+(async () => {
+  if (options.enableLanguageServer)
+    getRootUri(
+      (response) => {
+        rootUri = response.data;
+        console.log(
+          "[monaco-it inject] connect language serve success, rootUri:",
+          rootUri
+        );
+        if (getCurrentLanguage() == "cpp")
+          updateFile(getFileNameFromUrl(), getAceContent());
+        initialize(ace_editor.getValue());
+      },
+      (response) => {
+        rootUri = null;
+        console.log(
+          "[monaco-it inject] connect language serve failed:",
+          response
+        );
+        initialize(ace_editor.getValue());
+      }
+    );
+  else initialize(ace_editor.getValue());
+})();
 
-function initialize() {
+async function initialize() {
   // avoid CROS
   let baseUrl = $("head").attr("data-monaco-editor-public-path");
   self.MonacoEnvironment = getMonacoEnvironment(baseUrl);
@@ -120,7 +131,7 @@ function initialize() {
   );
   let monaco_model = createModel();
   let editorOptions = options.editorOptions;
-  let monaco_editor = createEditor(
+  let monaco_editor = await createEditor(
     document.getElementById("monaco-it-editor"),
     monaco_model,
     isReadOnly(),
@@ -174,7 +185,23 @@ function tryConnectServer(editor, model) {
   registerCompletion(editor, getCurrentLanguage(), true);
 }
 
-function createEditor(container, model, readOnly = false, settings) {
+async function createEditor(container, model, readOnly = false, settings) {
+  // load wasm
+  await loadWASM(require("path").join(extBaseUrl, "/onigasm/onigasm.wasm"));
+
+  // Load themes
+  const themeData = {
+    light_plus: await (
+      await fetch(require("path").join(extBaseUrl, "themes/light.json"))
+    ).json(),
+    dark_plus: await (
+      await fetch(require("path").join(extBaseUrl, "themes/dark.json"))
+    ).json(),
+  };
+
+  monaco.editor.defineTheme("light-plus", themeData.light_plus);
+  monaco.editor.defineTheme("dark-plus", themeData.dark_plus);
+
   let editor = monaco.editor.create(container, {
     model,
     readOnly,
@@ -191,8 +218,20 @@ function createEditor(container, model, readOnly = false, settings) {
   editor.onDidContentSizeChange(updateHeight);
   updateHeight();
 
-  // sync code between monaco and ace
-  // every time content changes: cancel event listener, apply change, add event listener
+  // wait for workers
+  let loop = () => {
+    if (hasGetWorker) {
+      console.log("[monaco-it inject] hasGetWorker");
+      Promise.resolve().then(async () => {
+        await wireTmGrammars(monaco, getRegistry(), grammars, editor);
+      });
+    } else {
+      setTimeout(() => {
+        loop();
+      }, 100);
+    }
+  };
+  loop();
 
   return editor;
 }
@@ -248,4 +287,31 @@ function createModel() {
 
   console.log("[monaco-it inject] create model", { code, lang, uri });
   return model;
+}
+
+let hasGetWorker = false;
+function getMonacoEnvironment(baseUrl) {
+  function workerCros(url) {
+    const iss = "importScripts('" + url + "');";
+    return new Worker(URL.createObjectURL(new Blob([iss])));
+  }
+  return {
+    baseUrl,
+    getWorker: function (moduleId, label) {
+      hasGetWorker = true;
+      if (label === "json") {
+        return workerCros(baseUrl + "json.worker.js");
+      }
+      if (label === "css") {
+        return workerCros(baseUrl + "css.worker.js");
+      }
+      if (label === "html") {
+        return workerCros(baseUrl + "html.worker.js");
+      }
+      if (label === "typescript" || label === "javascript") {
+        return workerCros(baseUrl + "ts.worker.js");
+      }
+      return workerCros(baseUrl + "editor.worker.js");
+    },
+  };
 }

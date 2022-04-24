@@ -8,6 +8,44 @@ if (document.head.dataset.monacoItOptions) {
   }
 }
 
+import { Registry } from "monaco-textmate";
+
+export const grammars = new Map();
+grammars.set("cpp", "source.cpp");
+grammars.set("python", "source.python");
+
+export function getRegistry() {
+  const url = document.head.dataset.monacoItPublicPath;
+  console.log(url);
+
+  const grammarFiles = {
+    "source.cpp": "cpp.tmLanguage.json",
+    "source.python": "MagicPython.tmLanguage.json",
+    "source.cpp.embedded.macro": "cpp.embedded.macro.tmLanguage.json",
+    "source.regexp.python": "MagicRegExp.tmLanguage.json",
+    "source.sql": "sql.tmLanguage.json",
+  };
+
+  return new Registry({
+    getGrammarDefinition: async (scopeName) => {
+      // console.log("fetch", scopeName, grammarFiles);
+      if (scopeName in grammarFiles)
+        return {
+          format: "json",
+          content: await (
+            await fetch(
+              require("path").join(url, "/grammars/" + grammarFiles[scopeName])
+            )
+          ).text(),
+        };
+      else {
+        console.warn("no grammar for", scopeName);
+        return { format: "json", content: {} };
+      }
+    },
+  });
+}
+
 const monaco = require("monaco-editor/esm/vs/editor/editor.api");
 
 // there must exists lang.js in languages folder, if supportedLanguages includes lang
@@ -68,11 +106,11 @@ export function registerCompletion(editor, lang, enableLanguageService) {
 }
 
 export function registerLanguages() {
-  for (let lang of supportedLanguages) {
-    const { language } = require(`./languages/${lang}.js`);
-    monaco.languages.register(language);
-    console.log("[monaco-it] register language", language);
-  }
+  // for (let lang of supportedLanguages) {
+  //   const { language } = require(`./languages/${lang}.js`);
+  //   monaco.languages.register(language);
+  //   console.log("[monaco-it] register language", language);
+  // }
 }
 
 function createDependencyProposals(
@@ -149,4 +187,34 @@ function getTokens(code) {
     tokens.push(array1[0]);
   }
   return Array.from(new Set(tokens));
+}
+
+let done = false;
+
+export function hasGetAllWorkUrl() {
+  return done;
+}
+
+// create workers using blob
+export function getWorkerUrl(baseUrl) {
+  function workerCros(url) {
+    const iss = "importScripts('" + url + "');";
+    return new Worker(URL.createObjectURL(new Blob([iss])));
+  }
+  return function (moduleId, label) {
+    done = true;
+    if (label === "json") {
+      return workerCros(baseUrl + "json.worker.js");
+    }
+    if (label === "css") {
+      return workerCros(baseUrl + "css.worker.js");
+    }
+    if (label === "html") {
+      return workerCros(baseUrl + "html.worker.js");
+    }
+    if (label === "typescript" || label === "javascript") {
+      return workerCros(baseUrl + "ts.worker.js");
+    }
+    return workerCros(baseUrl + "editor.worker.js");
+  };
 }
