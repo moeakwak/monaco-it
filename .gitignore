@@ -3,6 +3,7 @@
 
 # production
 /build
+/monaco-it-build
 
 # misc
 .DS_Store

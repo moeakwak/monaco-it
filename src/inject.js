@@ -87,7 +87,7 @@ function getUri(lang) {
 let rootUri = null;
 
 (async () => {
-  if (options.enableLanguageServer)
+  if (isEnableLanguageService())
     getRootUri(
       (response) => {
         rootUri = response.data;

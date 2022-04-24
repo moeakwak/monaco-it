@@ -5,7 +5,7 @@
   "scripts": {
     "watch": "webpack --mode=development --watch --config config/webpack.config.js",
     "build": "webpack --mode=production --config config/webpack.config.js",
-    "release": "rm -rf build && npm run build && zip -r monaco-it-extension-${npm_package_version}.zip build",
+    "release": "rm -rf build monaco-it-build && npm run build && cp -R build monaco-it-build && zip -r monaco-it-extension-${npm_package_version}.zip monaco-it-build",
     "convert-themes": "node ./public/themes/convert_theme.js"
   },
   "devDependencies": {
