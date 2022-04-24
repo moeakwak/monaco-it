@@ -6,6 +6,7 @@ const common = require("./webpack.common.js");
 const PATHS = require("./paths");
 // const MonacoWebpackPlugin = require("monaco-editor-webpack-plugin");
 const MonacoWebpackPlugin = require("monaco-editor-esm-webpack-plugin");
+const TerserPlugin = require("terser-webpack-plugin");
 
 // Merge webpack configuration files
 const config = (env, argv) =>
@@ -81,7 +82,7 @@ const config = (env, argv) =>
           "typescript",
           "c",
           "cpp",
-          'python',
+          "python",
           "json",
           "java",
           "golang",
@@ -115,6 +116,17 @@ const config = (env, argv) =>
         ),
       },
     },
+    ...(argv.mode === "production"
+      ? {
+          optimization: {
+            minimizer: [
+              new TerserPlugin({
+                terserOptions: { output: { ascii_only: true } },
+              }),
+            ],
+          },
+        }
+      : {}),
     // externals: {
     //   vscode: "commonjs vscode",
     // },
