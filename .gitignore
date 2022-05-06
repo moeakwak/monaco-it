@@ -10,5 +10,6 @@
 
 npm-debug.log*
 test
+testvue
 
 *.zip

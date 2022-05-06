@@ -7,6 +7,7 @@ const PATHS = require("./paths");
 // const MonacoWebpackPlugin = require("monaco-editor-webpack-plugin");
 const MonacoWebpackPlugin = require("monaco-editor-esm-webpack-plugin");
 const TerserPlugin = require("terser-webpack-plugin");
+const { VueLoaderPlugin } = require('vue-loader')
 
 // Merge webpack configuration files
 const config = (env, argv) =>
@@ -54,6 +55,10 @@ const config = (env, argv) =>
           include: /node_modules[\\\/]monaco-editor[\\\/]esm/,
           use: MonacoWebpackPlugin.loader,
         },
+        {
+          test: /\.vue$/,
+          loader: 'vue-loader'
+        }
         // {
         //   test: /\.js$/,
         //   loader: "string-replace-loader",
@@ -99,6 +104,7 @@ const config = (env, argv) =>
         setImmediate: ["setimmediate", "setImmedate"],
         clearImmediate: ["setimmediate", "clearImmedate"],
       }),
+      new VueLoaderPlugin()
     ],
     resolve: {
       fallback: {

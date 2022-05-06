@@ -1,101 +1,116 @@
 <!DOCTYPE html>
 <html>
-  <head>
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>MonacoIt Options</title>
-    <link rel="stylesheet" href="pico.css" />
-    <style>
-      h3 {
-        margin-top: 30px;
-        margin-bottom: 20px;
-      }
-    </style>
-  </head>
-  <body>
-    <main class="container">
-      <article style="margin-top: 0">
-        <header style="padding-bottom: 0; margin-bottom: 40px">
-          <hgroup>
-            <h1>Monaco It</h1>
-            <h2>
-              version 0.5.0
-              <a href="https://github.com/moeakwak/monaco-it">Github</a>
-            </h2>
-          </hgroup>
-        </header>
 
-        <form>
-          <!-- General -->
-          <h3>General</h3>
-          <p>
-            Locale:
-            <input type="radio" name="editorLocale" value="zh_CN" />zh_CN
-            <input type="radio" name="editorLocale" value="en_US" />en_US
-          </p>
-          <fieldset>
-            Enable Language Server:
-            <input type="radio" name="enableLanguageServer" value="true" />Yes
-            <input type="radio" name="enableLanguageServer" value="false" />No
-          </fieldset>
-          <div class="grid" id="languageServerUrlSection">
-            <div><input type="text" id="languageServerUrl" /></div>
-            <div><a href="#" id="test" role="button">Test</a></div>
-          </div>
-          <div id="test-status"></div>
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <title>MonacoIt Options</title>
+  <script src="vue.global.js"></script>
+  <link rel="stylesheet" href="pico.css" />
+  <style>
+    h3 {
+      margin-top: 30px;
+      margin-bottom: 20px;
+    }
+  </style>
+</head>
 
-          <!-- Editor Styles -->
-          <h3>Style</h3>
-          <div class="grid">
-            <label for="theme">
-              Themes Option:
-              <select id="theme">
-                <option value="light-plus">light-plus</option>
-                <option value="dark-plus">dark-plus (recommand)</option>
-                <option value="vs">vs</option>
-                <option value="vs-dark">vs-dark</option>
-              </select>
-            </label>
-            <label for="font-size">
-              Font Size:
-              <input type="text" id="font-size" />
-            </label>
-          </div>
-          <p style="color: gray">
-            (Note: xxx-plus theme may not work well on websites which reject
-            wasm loading.)
-          </p>
+<body>
+  <main id="app" class="container">
+    <article style="margin-top: 0">
+      <header style="padding-bottom: 0; margin-bottom: 40px">
+        <hgroup>
+          <h1>Monaco It</h1>
+          <h2>
+            version 0.5.0
+            <a href="https://github.com/moeakwak/monaco-it">Github</a>
+          </h2>
+        </hgroup>
+      </header>
 
-          <!-- Other Editor Options -->
-          <h3>Monaco Editor Options (JSON)</h3>
-          <p>
-            See
-            <a
-              href="https://microsoft.github.io/monaco-editor/api/interfaces/monaco.editor.IEditorOptions.html"
-              >IEditorOptions</a
-            >,
-            <a
-              href="https://microsoft.github.io/monaco-editor/api/interfaces/monaco.editor.IStandaloneEditorConstructionOptions.html"
-            >
-              IStandaloneEditorConstructionOptions </a
-            >,
-            <a
-              href="https://microsoft.github.io/monaco-editor/api/interfaces/monaco.editor.IGlobalEditorOptions.html"
-              >IGlobalEditorOptions</a
-            >
-            for more info.
-          </p>
-          <textarea
-            id="editor-options"
-            style="width: 100%; min-height: 550px"
-          ></textarea>
-        </form>
-        <div>
-          <button id="save">Save</button>
-          <button id="reset">Reset</button>
-          <div id="save-status"></div>
+      <form>
+        <!-- General -->
+        <h3>General</h3>
+        <p>
+          Locale:
+          <input type="radio" name="editorLocale" value="zh_CN" v-model="options.editorLocale" />zh_CN
+          <input type="radio" name="editorLocale" value="en_US" v-model="options.editorLocale" />en_US
+        </p>
+        <fieldset>
+          Enable Language Server:
+          <input type="radio" name="enableLanguageServer" value="true" v-model="options.enableLanguageServer" />Yes
+          <input type="radio" name="enableLanguageServer" value="false" v-model="options.enableLanguageServer" />No
+        </fieldset>
+        <div class="grid" id="languageServerUrlSection">
+          <div><input type="text" id="languageServerUrl" v-model="options.languageServerUrl" v-on:input="checkLanguageServerUrl" /></div>
+          <div><a href="#" id="test" role="button" v-click="testServer">Test</a></div>
         </div>
-      </article>
-    </main>
-    <script src="options.js"></script>
-  </body>
+        <div id="test-status"></div>
+
+        <!-- Editor Styles -->
+        <h3>Style</h3>
+        <div class="grid">
+          <label for="theme">
+            Themes Option:
+            <select id="theme" v-model="options.editorOptions.theme">
+              <option value="light-plus">light-plus</option>
+              <option value="dark-plus">dark-plus (recommand)</option>
+              <option value="vs">vs</option>
+              <option value="vs-dark">vs-dark</option>
+            </select>
+          </label>
+          <label for="font-size">
+            Font Size:
+            <input type="text" id="font-size" v-model="options.editorOptions.fontSize" />
+          </label>
+        </div>
+        <p style="color: gray">
+          (Note: xxx-plus theme may not work well on websites which reject
+          wasm loading.)
+        </p>
+
+        <!-- Other Editor Options -->
+        <h3>Monaco Editor Options (JSON)</h3>
+        <p>
+          See
+          <a href="https://microsoft.github.io/monaco-editor/api/interfaces/monaco.editor.IEditorOptions.html">IEditorOptions</a>,
+          <a href="https://microsoft.github.io/monaco-editor/api/interfaces/monaco.editor.IStandaloneEditorConstructionOptions.html">
+            IStandaloneEditorConstructionOptions </a>,
+          <a href="https://microsoft.github.io/monaco-editor/api/interfaces/monaco.editor.IGlobalEditorOptions.html">IGlobalEditorOptions</a>
+          for more info.
+        </p>
+        <textarea id="editor-options" style="width: 100%; min-height: 550px" v-model="editorOptionsText"></textarea>
+
+        <!-- Editor Enable Settings -->
+        <h3>Enable Monaco It in Textarea</h3>
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">#</th>
+              <th scope="col">Name</th>
+              <th scope="col">Url Pattern</th>
+              <th scope="col">Textarea ID</th>
+              <th scope="col">Enable</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th scope="row">1</th>
+              <td>Cell</td>
+              <td>Cell</td>
+              <td>Cell</td>
+              <td>Cell</td>
+              <td>Cell</td>
+            </tr>
+        </table>
+      </form>
+      <div>
+        <button id="save" v-on:click="save">Save</button>
+        <button id="reset" v-on:click="reset">Reset</button>
+        <div id="save-status"></div>
+      </div>
+    </article>
+  </main>
+  <script src="options.js"></script>
+</body>
+
 </html>
