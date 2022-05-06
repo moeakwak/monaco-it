@@ -64,9 +64,7 @@ function restore_options() {
     $("#languageServerUrl").val(items.languageServerUrl);
     $("#font-size").val(items.editorOptions.fontSize);
     $("#editor-options").val(JSON.stringify(items.editorOptions, null, 4));
-    $("input[name='theme']")
-      .filter("[value='" + items.editorOptions.theme + "']")
-      .attr("checked", true);
+    $("#theme").val(items.editorOptions.theme);
   });
 }
 
@@ -107,7 +105,7 @@ $("#reset").on("click", () => {
   chrome.storage.local.set(defaultOptions, restore_options);
 });
 
-$("input[name='theme']").on("click", (e) => {
+$("#theme").on("change", (e) => {
   let theme = $(e.currentTarget).val();
   setEditorOptionsItem("theme", theme);
 });
@@ -117,6 +115,25 @@ $("#font-size").on("input", (e) => {
   size = parseInt(size);
   if (!size) return;
   setEditorOptionsItem("fontSize", size);
+});
+
+$('input[name="enableLanguageServer"').on("change", (e) => {
+  if (e.target.value === "false") {
+    $("#languageServerUrlSection").hide();
+  } else {
+    $("#languageServerUrlSection").show();
+  }
+});
+
+$("#languageServerUrl").on("input", (e) => {
+  if (
+    !e.target.value.startsWith("ws://") &&
+    !e.target.value.startsWith("wss://")
+  ) {
+    $(e.target).attr("aria-invalid", "true");
+  } else {
+    $(e.target).attr("aria-invalid", "false");
+  }
 });
 
 document.addEventListener("DOMContentLoaded", restore_options);

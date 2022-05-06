@@ -3,92 +3,99 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     <title>MonacoIt Options</title>
+    <link rel="stylesheet" href="pico.css" />
     <style>
-      body {
-        font-size: 16px;
+      h3 {
+        margin-top: 30px;
+        margin-bottom: 20px;
       }
     </style>
   </head>
   <body>
-    <div>
-      <p><a href="https://github.com/moeakwak/monaco-it">Github</a></p>
-      <h2>Monaco It Options (version 0.4.2)</h2>
-      <p>
-        Locale:
-        <input type="radio" name="editorLocale" value="zh_CN" />zh_CN
-        <input type="radio" name="editorLocale" value="en_US" />en_US
-      </p>
-      <p>
-        Enable Language Server:
-        <input type="radio" name="enableLanguageServer" value="true" />Yes
-        <input type="radio" name="enableLanguageServer" value="false" />No
-      </p>
-      <p>
-        Language Server Address:
-        <input type="text" id="languageServerUrl" style="width: 200px" />
-        <button id="test">Test</button>
-      </p>
+    <main class="container">
+      <article style="margin-top: 0">
+        <header style="padding-bottom: 0; margin-bottom: 40px">
+          <hgroup>
+            <h1>Monaco It</h1>
+            <h2>
+              version 0.5.0
+              <a href="https://github.com/moeakwak/monaco-it">Github</a>
+            </h2>
+          </hgroup>
+        </header>
 
-      <div id="test-status"></div>
-    </div>
-    <div
-      style="
-        width: 100%;
-        height: 10px;
-        background-color: rgb(211, 211, 211);
-        margin-top: 10px;
-        margin-bottom: 10px;
-      "
-    ></div>
-    <div>
-      <h2>Monaco Editor Options</h2>
-      <p>
-        See
-        <a
-          href="https://microsoft.github.io/monaco-editor/api/interfaces/monaco.editor.IEditorOptions.html"
-          >IEditorOptions</a
-        >,
-        <a
-          href="https://microsoft.github.io/monaco-editor/api/interfaces/monaco.editor.IStandaloneEditorConstructionOptions.html"
-        >
-          IStandaloneEditorConstructionOptions </a
-        >,
-        <a
-          href="https://microsoft.github.io/monaco-editor/api/interfaces/monaco.editor.IGlobalEditorOptions.html"
-          >IGlobalEditorOptions</a
-        >
-        for more info.
-      </p>
+        <form>
+          <!-- General -->
+          <h3>General</h3>
+          <p>
+            Locale:
+            <input type="radio" name="editorLocale" value="zh_CN" />zh_CN
+            <input type="radio" name="editorLocale" value="en_US" />en_US
+          </p>
+          <fieldset>
+            Enable Language Server:
+            <input type="radio" name="enableLanguageServer" value="true" />Yes
+            <input type="radio" name="enableLanguageServer" value="false" />No
+          </fieldset>
+          <div class="grid" id="languageServerUrlSection">
+            <div><input type="text" id="languageServerUrl" /></div>
+            <div><a href="#" id="test" role="button">Test</a></div>
+          </div>
+          <div id="test-status"></div>
 
-      <div>
-        Themes Option:
-        <input type="radio" name="theme" value="light-plus" />light-plus
-        <input type="radio" name="theme" value="dark-plus" />dark-plus
-        (recommand) <input type="radio" name="theme" value="vs" />vs
-        <input type="radio" name="theme" value="vs-dark" />vs-dark
-      </div>
-      <p style="color: gray;">Note: xxx-plus theme may not work well on websites which reject wasm loading.</p>
-      <p>Font Size: <input type="text" id="font-size" style="width: 30px" /></p>
-      <textarea
-        id="editor-options"
-        style="width: 100%; min-height: 300px"
-      ></textarea>
-    </div>
-    <div
-      style="
-        width: 100%;
-        height: 10px;
-        background-color: rgb(211, 211, 211);
-        margin-top: 10px;
-        margin-bottom: 10px;
-      "
-    ></div>
-    <div>
-      <button id="save">Save</button>
-      <button id="reset">Reset</button>
-      <div id="save-status"></div>
-    </div>
+          <!-- Editor Styles -->
+          <h3>Style</h3>
+          <div class="grid">
+            <label for="theme">
+              Themes Option:
+              <select id="theme">
+                <option value="light-plus">light-plus</option>
+                <option value="dark-plus">dark-plus (recommand)</option>
+                <option value="vs">vs</option>
+                <option value="vs-dark">vs-dark</option>
+              </select>
+            </label>
+            <label for="font-size">
+              Font Size:
+              <input type="text" id="font-size" />
+            </label>
+          </div>
+          <p style="color: gray">
+            (Note: xxx-plus theme may not work well on websites which reject
+            wasm loading.)
+          </p>
 
+          <!-- Other Editor Options -->
+          <h3>Monaco Editor Options (JSON)</h3>
+          <p>
+            See
+            <a
+              href="https://microsoft.github.io/monaco-editor/api/interfaces/monaco.editor.IEditorOptions.html"
+              >IEditorOptions</a
+            >,
+            <a
+              href="https://microsoft.github.io/monaco-editor/api/interfaces/monaco.editor.IStandaloneEditorConstructionOptions.html"
+            >
+              IStandaloneEditorConstructionOptions </a
+            >,
+            <a
+              href="https://microsoft.github.io/monaco-editor/api/interfaces/monaco.editor.IGlobalEditorOptions.html"
+              >IGlobalEditorOptions</a
+            >
+            for more info.
+          </p>
+          <textarea
+            id="editor-options"
+            style="width: 100%; min-height: 550px"
+          ></textarea>
+        </form>
+        <div>
+          <button id="save">Save</button>
+          <button id="reset">Reset</button>
+          <div id="save-status"></div>
+        </div>
+      </article>
+    </main>
     <script src="options.js"></script>
   </body>
 </html>
