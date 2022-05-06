@@ -187,7 +187,9 @@ function tryConnectServer(editor, model) {
 
 async function createEditor(container, model, readOnly = false, settings) {
   // load wasm
-  await loadWASM(require("path").join(extBaseUrl, "/onigasm/onigasm.wasm"));
+  (async () => {
+    await loadWASM(require("path").join(extBaseUrl, "/onigasm/onigasm.wasm"));
+  })();
 
   // Load themes
   const themeData = {
