@@ -7,7 +7,6 @@ const PATHS = require("./paths");
 // const MonacoWebpackPlugin = require("monaco-editor-webpack-plugin");
 const MonacoWebpackPlugin = require("monaco-editor-esm-webpack-plugin");
 const TerserPlugin = require("terser-webpack-plugin");
-const { VueLoaderPlugin } = require('vue-loader')
 
 // Merge webpack configuration files
 const config = (env, argv) =>
@@ -103,8 +102,7 @@ const config = (env, argv) =>
       new webpack.ProvidePlugin({
         setImmediate: ["setimmediate", "setImmedate"],
         clearImmediate: ["setimmediate", "clearImmedate"],
-      }),
-      new VueLoaderPlugin()
+      })
     ],
     resolve: {
       fallback: {

@@ -29,32 +29,48 @@ export const defaultOptions = {
 
 document.addEventListener("DOMContentLoaded", () => {
   chrome.storage.local.get(defaultOptions, function (options) {
-    const App = {
+    const app = Vue.createApp({
       data() {
         return {
           options,
-          editorOptionsText,
+          isEditorOptionsTextInvalid: false,
           save_status: "",
+          updateEditorOptions: true,
         };
+      },
+      computed: {
+        editorOptionsText: {
+          get() {
+            return JSON.stringify(this.options.editorOptions, null, 4);
+          },
+          set(value) {
+            try {
+              let editorOptions = JSON.parse(value);
+              this.isEditorOptionsTextInvalid = false;
+              this.updateEditorOptions = false;
+              this.options.editorOptions = editorOptions;
+              this.$emit("update:modelValue", value);
+            } catch (error) {
+              this.isEditorOptionsTextInvalid = true;
+            }
+          },
+        },
+        isServerUrlInvalid() {
+          return (
+            !this.options.languageServerUrl.startsWith("ws://") &&
+            !this.options.languageServerUrl.startsWith("wss://")
+          );
+        },
       },
       created() {
         this.$watch(
           () => this.options.editorOptions,
           (newVal, oldVal) => {
-            this.editorOptionsText = JSON.stringify(newVal, null, 4);
+            if (this.updateEditorOptions)
+              this.editorOptionsText = JSON.stringify(newVal, null, 4);
+            else this.updateEditorOptions = true;
           }
         );
-        this.$watch("editorOptionsText", (newVal, oldVal) => {
-          let editorOptions = null;
-          try {
-            editorOptions = JSON.stringify(newVal, null, 4);
-          } catch (error) {
-            alert("Invalid options JSON content!" + error);
-            this.editorOptionsText = oldVal;
-            return;
-          }
-          this.options.editorOptions = editorOptions;
-        });
       },
       methods: {
         reset() {
@@ -62,8 +78,8 @@ document.addEventListener("DOMContentLoaded", () => {
         },
         save() {
           chrome.storage.local.set(this.options, function () {
-            save_status = "<p>Options saved!</p>";
             console.log("save options", options);
+            alert("Options saved!");
           });
         },
         testServer() {
@@ -84,19 +100,12 @@ document.addEventListener("DOMContentLoaded", () => {
             languageServerUrl
           );
         },
-        checkLanguageServerUrl() {
-          if (
-            !this.options.languageServerUrl.startsWith("ws://") &&
-            !this.options.languageServerUrl.startsWith("wss://")
-          ) {
-            $("#languageServerUrl").attr("aria-invalid", "true");
-          } else {
-            $("#languageServerUrl").attr("aria-invalid", "false");
-          }
-        }
       },
+    });
+    app.config.compilerOptions.isCustomElement = (tag) => {
+      return tag == "hgroup";
     };
-    Vue.createApp(App).mount("#app");
+    app.mount("#app");
   });
 });
 

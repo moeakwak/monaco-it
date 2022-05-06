@@ -16,7 +16,7 @@
 
 <body>
   <main id="app" class="container">
-    <article style="margin-top: 0">
+    <article style="margin-top: 0; padding-bottom: 30px;">
       <header style="padding-bottom: 0; margin-bottom: 40px">
         <hgroup>
           <h1>Monaco It</h1>
@@ -35,14 +35,15 @@
           <input type="radio" name="editorLocale" value="zh_CN" v-model="options.editorLocale" />zh_CN
           <input type="radio" name="editorLocale" value="en_US" v-model="options.editorLocale" />en_US
         </p>
-        <fieldset>
+
+        <p>
           Enable Language Server:
-          <input type="radio" name="enableLanguageServer" value="true" v-model="options.enableLanguageServer" />Yes
-          <input type="radio" name="enableLanguageServer" value="false" v-model="options.enableLanguageServer" />No
-        </fieldset>
-        <div class="grid" id="languageServerUrlSection">
-          <div><input type="text" id="languageServerUrl" v-model="options.languageServerUrl" v-on:input="checkLanguageServerUrl" /></div>
-          <div><a href="#" id="test" role="button" v-click="testServer">Test</a></div>
+          <input type="checkbox" role="switch" name="enableLanguageServer" v-model="options.enableLanguageServer">
+        </p>
+
+        <div class="grid" v-if="options.enableLanguageServer">
+          <div><input type="text" id="languageServerUrl" v-model="options.languageServerUrl" :aria-invalid="isServerUrlInvalid" /></div>
+          <div><a href="#" id="test" role="button" v-on:click="testServer">Test</a></div>
         </div>
         <div id="test-status"></div>
 
@@ -64,8 +65,8 @@
           </label>
         </div>
         <p style="color: gray">
-          (Note: xxx-plus theme may not work well on websites which reject
-          wasm loading.)
+          Note: light-plus and dark-plus themes may not work well on websites which reject
+          wasm loading.
         </p>
 
         <!-- Other Editor Options -->
@@ -78,35 +79,16 @@
           <a href="https://microsoft.github.io/monaco-editor/api/interfaces/monaco.editor.IGlobalEditorOptions.html">IGlobalEditorOptions</a>
           for more info.
         </p>
-        <textarea id="editor-options" style="width: 100%; min-height: 550px" v-model="editorOptionsText"></textarea>
+        <textarea id="editor-options" style="width: 100%; min-height: 550px" v-model="editorOptionsText"
+          :aria-invalid="isEditorOptionsTextInvalid"></textarea>
 
         <!-- Editor Enable Settings -->
-        <h3>Enable Monaco It in Textarea</h3>
-        <table>
-          <thead>
-            <tr>
-              <th scope="col">#</th>
-              <th scope="col">Name</th>
-              <th scope="col">Url Pattern</th>
-              <th scope="col">Textarea ID</th>
-              <th scope="col">Enable</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <th scope="row">1</th>
-              <td>Cell</td>
-              <td>Cell</td>
-              <td>Cell</td>
-              <td>Cell</td>
-              <td>Cell</td>
-            </tr>
-        </table>
+        <!-- <h3>Enable Monaco It in Textarea</h3> -->
+
       </form>
       <div>
         <button id="save" v-on:click="save">Save</button>
-        <button id="reset" v-on:click="reset">Reset</button>
-        <div id="save-status"></div>
+        <button id="reset" class="outline" v-on:click="reset">Reset</button>
       </div>
     </article>
   </main>
