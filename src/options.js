@@ -7,6 +7,8 @@ export const defaultOptions = {
   languageServerUrl: "ws://127.0.0.1:3000",
   enableLanguageServer: false,
   editorLocale: "en_US",
+  editorSubstitutionPolicy: "hide",  // or "overlay"
+  editorMinHeight: 400,
   editorOptions: {
     theme: "dark-plus",
     fontSize: 14,
@@ -22,12 +24,16 @@ export const defaultOptions = {
     scrollbar: {
       alwaysConsumeMouseWheel: false,
     },
-    automaticLayout: true,
+    automaticLayout: false,
     overviewRulerLanes: 0,
   },
 };
 
 document.addEventListener("DOMContentLoaded", () => {
+  chrome.storage.local.get(defaultOptions, (options) => {
+    console.log(options);
+    chrome.storage.local.set(options);
+  });
   chrome.storage.local.get(defaultOptions, function (options) {
     const app = Vue.createApp({
       data() {
@@ -69,6 +75,15 @@ document.addEventListener("DOMContentLoaded", () => {
             if (this.updateEditorOptions)
               this.editorOptionsText = JSON.stringify(newVal, null, 4);
             else this.updateEditorOptions = true;
+          }
+        );
+        this.$watch(() => this.options.editorSubstitutionPolicy,
+          (newVal, oldVal) => {
+            if (newVal == 'Same With Ace Editor') {
+              this.options.editorOptions.scrollbar.alwaysConsumeMouseWheel = true;
+            } else {
+              this.options.editorOptions.scrollbar.alwaysConsumeMouseWheel = false;
+            }
           }
         );
       },

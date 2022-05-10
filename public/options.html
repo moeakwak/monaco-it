@@ -50,9 +50,9 @@
         <!-- Editor Styles -->
         <h3>Style</h3>
         <div class="grid">
-          <label for="theme">
+          <label for="theme-option">
             Themes Option:
-            <select id="theme" v-model="options.editorOptions.theme">
+            <select id="theme-option" v-model="options.editorOptions.theme">
               <option value="light-plus">light-plus</option>
               <option value="dark-plus">dark-plus (recommand)</option>
               <option value="vs">vs</option>
@@ -69,6 +69,21 @@
           wasm loading.
         </p>
 
+        <!-- Editor Substitution Policy -->
+        <h3>Substitution</h3>
+        <div class="grid">
+          <label for="size">
+            Policy:
+            <select id="size-option" v-model="options.editorSubstitutionPolicy">
+              <option value="hide">Hide ace editor, height autogrow (fit content)</option>
+              <option value="overlay">Overlay ace editor (experimental)</option>
+            </select>
+          </label>
+          <label for="font-size" v-show="options.editorSubstitutionPolicy == 'hide'">
+            Min Height (-1 means auto):
+            <input type="text" v-model="options.editorMinHeight" />
+          </label>
+        </div>
         <!-- Other Editor Options -->
         <h3>Monaco Editor Options (JSON)</h3>
         <p>

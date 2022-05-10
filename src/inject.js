@@ -29,14 +29,9 @@ const options = JSON.parse(document.head.dataset.monacoItOptions);
 registerLanguages();
 
 // load ace editor initial configs
-let ace_editor_div = $(".ace_editor");
-let ace_editor = ace.edit(ace_editor_div.get()[0]);
+let ace_editor_div = $(".ace_editor").get(0);
+let ace_editor = ace.edit(ace_editor_div);
 let ace_editor_session = ace_editor.getSession();
-
-ace_editor.on("change", (ev) => {
-  // console.log("[monaco-it inject] ace_editor change", { code: getAceContent(), ev });
-  ace_editor_div.trigger("ace-editor-change");
-});
 
 let languageWebSocket = null;
 
@@ -117,51 +112,103 @@ async function initialize() {
   self.MonacoEnvironment = getMonacoEnvironment(baseUrl);
 
   // create monaco editor
-  ace_editor_div.after(
-    `<div id="monaco-it-editor"
-          style="position: relative; height: 100%; width: 100%; border: 1px solid #c2c7d0">
-      </div>`
+  $(ace_editor_div).after(
+    `<div id="monaco-it-wrapper">
+      <div id="monaco-it-editor" style="height: 100%; width: 100%; border: 1px solid #c2c7d0"></div>
+    </div>`
   );
-  let monaco_div = $("#monaco-it-editor");
 
-  console.log(
-    "[monaco-it inject] create model",
-    getUri(),
-    getCurrentLanguage()
-  );
+  let monaco_div = document.getElementById("monaco-it-editor");
   let monaco_model = createModel();
   let editorOptions = options.editorOptions;
   let monaco_editor = await createEditor(
-    document.getElementById("monaco-it-editor"),
+    monaco_div,
     monaco_model,
     isReadOnly(),
     editorOptions
   );
-  monaco_editor.layout();
-  console.log("[monaco-it] monaco editor created", monaco_editor, monaco_model);
+  console.log("[monaco-it inject] create", getUri(), getCurrentLanguage());
 
-  // hide ace editor
-  ace_editor_div.hide();
+  // substitution policy
+  // hide: height fit to content; update width on resize; hide ace editor
+  // overlay: monaco overlay ace editor; height and width same as ace editor
+  let updateSize = null;
+  if (options.editorSubstitutionPolicy == 'hide') {
+    let ace_width = ace_editor_div.offsetWidth;
+    $(ace_editor_div).hide();
+    // monaco_div.style.overflow = "hidden";
+    updateSize = () => {
+      const minHeight = options.editorMinHeight < 0
+        ? ace_layout.height
+        : options.editorMinHeight;
+      const contentHeight = Math.max(minHeight, monaco_editor.getContentHeight());
+      monaco_div.style.width = `${ace_width}px`;
+      monaco_div.style.height = `${contentHeight}px`;
+      monaco_editor.layout({ width: ace_width, height: contentHeight });
+      // console.log("[monaco-it inject] (hide) update size", ace_layout, contentHeight);
+    }
+    updateSize();
+    monaco_editor.onDidContentSizeChange(updateSize);
+    window.addEventListener("resize", () => {
+      $(ace_editor_div).show();
+      ace_width = ace_editor_div.offsetWidth;
+      $(ace_editor_div).hide();
+      updateSize();
+    });
+  } else {
+    // move ace editor into wrapper
+    $(ace_editor_div).prependTo($("#monaco-it-wrapper"));
+    $("#monaco-it-wrapper").css("position", "relative");
+    $(ace_editor_div).css("position", "absolute");
+    $(ace_editor_div).css("top", 0);
+    $(ace_editor_div).css("left", 0);
+    $(monaco_div).css("position", "absolute");
+    $(monaco_div).css("top", 0);
+    $(monaco_div).css("left", 0);
+    let zindex = $(ace_editor_div).css("z-index");
+    if (isNaN(zindex)) zindex = 0;
+    zindex = Math.max(zindex, 5);
+    $(monaco_div).css("z-index", parseInt(zindex) + 1);
+    updateSize = () => {
+      let width = ace_editor_div.offsetWidth;
+      let height = ace_editor_div.offsetHeight;
+      $(monaco_div).width(width);
+      $(monaco_div).height(height);
+      monaco_editor.layout({ width, height });
+      // console.log("[monaco-it inject] (overlay) update size", width, height);
+    }
+    updateSize();
+    window.addEventListener("resize", updateSize);
+  }
+
+  ace_editor.on("change", (ev) => {
+    console.log("[monaco-it inject] ace_editor change", { code: getAceContent(), ev });
+    $(ace_editor_div).trigger("ace-editor-change");
+    if (options.editorSubstitutionPolicy == 'overlay') {
+      updateSize();
+    }
+  });
+
+  console.log("[monaco-it] monaco editor created", { monaco_editor, monaco_model });
 
   // first time set code syncronizer between ace and monaco
   let disposeSync = setCodeSyncHandler(monaco_editor);
 
   // sync language from ace to monaco
   ace_editor_session.on("changeMode", () => {
-    console.log(
-      "[monaco-it inject] change language to",
-      getCurrentLanguage(),
-      debugContent(monaco_editor)
-    );
+    console.log("[monaco-it inject] change language to", getCurrentLanguage(), debugContent(monaco_editor));
+    if (disposeSync != null) disposeSync();
     monaco_model = monaco.editor.getModel(monaco.Uri.parse(getUri()));
     if (!monaco_model) monaco_model = createModel();
-    if (getCurrentLanguage() == "cpp")
-      updateFile(getFileNameFromUrl(), getAceContent());
-    if (disposeSync != null) disposeSync();
-    monaco_editor.setModel(monaco_model);
-    disposeSync = setCodeSyncHandler(monaco_editor);
-    if (languageWebSocket) languageWebSocket.close();
-    tryConnectServer(monaco_editor, monaco_model);
+    setTimeout(() => {
+      // if (getCurrentLanguage() == "cpp")
+      //   updateFile(getFileNameFromUrl(), getAceContent());
+      monaco_model.setValue(getAceContent());
+      monaco_editor.setModel(monaco_model);
+      disposeSync = setCodeSyncHandler(monaco_editor);
+      if (languageWebSocket) languageWebSocket.close();
+      tryConnectServer(monaco_editor, monaco_model);
+    }, 100);
   });
 
   tryConnectServer(monaco_editor, monaco_model);
@@ -209,16 +256,6 @@ async function createEditor(container, model, readOnly = false, settings) {
     readOnly,
     ...(settings || defaultOptions.editorOptions),
   });
-  // content height: min 400; disable inner scroll; grow with text
-  const updateHeight = () => {
-    let contentHeight = editor.getContentHeight();
-    if (contentHeight < 400) contentHeight = 400;
-    $(container).height(contentHeight);
-
-    editor.layout();
-  };
-  editor.onDidContentSizeChange(updateHeight);
-  updateHeight();
 
   // wait for workers
   let loop = () => {
@@ -248,34 +285,24 @@ function debugContent(editor) {
 function setCodeSyncHandler(editor) {
   let disposable = null;
   // console.log("   ** setCodeSyncHandler", debugContent(editor));
-  let func = (event) => {
-    // monaco -> ace
-    ace_editor_div.off("ace-editor-change");
+  let syncToMonaco = (event) => {
+    disposable.dispose();
+    editor.setValue(getAceContent());
+    disposable = editor.onDidChangeModelContent(syncToAce);
+    console.log("   sync ace code to monaco", event, debugContent(editor));
+  };
+  let syncToAce = (event) => {
+    $(ace_editor_div).off("ace-editor-change");
     ace_editor.setValue(editor.getModel().getValue());
     // console.log("   sync monaco code to ace", event, debugContent(editor));
-    // ace -> monaco
-    ace_editor_div.on("ace-editor-change", (e) => {
-      if (getAceContent().length != 0) {
-        disposable.dispose();
-        editor.setValue(getAceContent());
-        disposable = editor.onDidChangeModelContent(func);
-        // console.log("   sync ace code to monaco", event, debugContent(editor));
-      } else {
-        // console.log(
-        //   "   sync ace code to monaco: do not clear op",
-        //   event,
-        //   debugContent(editor)
-        // );
-      }
-    });
+    $(ace_editor_div).on("ace-editor-change", syncToMonaco);
   };
+  disposable = editor.onDidChangeModelContent(syncToAce);
+  $(ace_editor_div).on("ace-editor-change", syncToMonaco);
 
-  disposable = editor.onDidChangeModelContent(func);
-
-  // return dispoable
   return () => {
     if (disposable) disposable.dispose();
-    ace_editor_div.off("ace-editor-change");
+    $(ace_editor_div).off("ace-editor-change");
   };
 }
 
@@ -284,9 +311,7 @@ function createModel() {
   let lang = getCurrentLanguage();
   let uri = monaco.Uri.parse(getUri());
   let model = monaco.editor.createModel(code, lang, uri);
-
   if (lang == "cpp") model.updateOptions({ tabSize: 4, indentSize: 4 });
-
   console.log("[monaco-it inject] create model", { code, lang, uri });
   return model;
 }
