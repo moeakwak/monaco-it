@@ -1,6 +1,6 @@
-# Monaco It
+# Monaco-It
 
-Monaco It is a chrome extension which helps change ace editor to monaco editor, supporting all features including autocompletes.
+Monaco-It is a chrome extension turning Ace Editor into Monaco Editor, supporting all features including autocompletes.
 
 [一些中文说明](./README_cn.md)
 
@@ -15,17 +15,9 @@ If enable language service (intellisense), keywords and token autocompletion wil
 
 ## How It Works
 
-First, MonacoIt will find divs with class "ace-editor" in the page. If so, it will hide that div, and create a monaco editor in the same place, just after the hided ace editor. Codes will be syncronized from monaco to ace, and the monaco editor's language will be the same as ace.
-
-To enable intellisense on supported language:
-
-- will try to use websocket connect ws://localhost:3000/language_name
-- If connected, then register snippets completion
-- If cannot connect, then register snippets, keywords and autocompletion based on simple tokenize
+Monaco-It will find the ace editor div by class "ace-editor" in the page, then codes will be syncronized between monaco and ace.
 
 ## Adding Language Support
-
-Assuming you're going to add support for language called "lang":
 
 - create `lang.js` in languages, and provide these exports:
   - `language`: monaco.language.register
@@ -37,7 +29,7 @@ Assuming you're going to add support for language called "lang":
 
 ## Intellisense (Language Server)
 
-We provide a language server, which supports `c++` and `python` experimentally: https://github.com/moeakwak/monaco-language-server
+We provide a language server for monaco editor, which supports `c++` and `python` experimentally: https://github.com/moeakwak/monaco-language-server
 
 ### Limitation
 

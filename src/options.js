@@ -79,7 +79,7 @@ document.addEventListener("DOMContentLoaded", () => {
         );
         this.$watch(() => this.options.editorSubstitutionPolicy,
           (newVal, oldVal) => {
-            if (newVal == 'Same With Ace Editor') {
+            if (newVal == 'overlay') {
               this.options.editorOptions.scrollbar.alwaysConsumeMouseWheel = true;
             } else {
               this.options.editorOptions.scrollbar.alwaysConsumeMouseWheel = false;
