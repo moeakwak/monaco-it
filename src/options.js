@@ -4,6 +4,7 @@ import $ from "jquery";
 import { getRootUri } from "./client";
 
 export const defaultOptions = {
+  clientId: null,
   languageServerUrl: "ws://127.0.0.1:3000",
   enableLanguageServer: false,
   editorLocale: "en_US",
@@ -29,12 +30,23 @@ export const defaultOptions = {
   },
 };
 
+function getRandomToken() {
+  var randomPool = new Uint8Array(4);
+  crypto.getRandomValues(randomPool);
+  var hex = '';
+  for (var i = 0; i < randomPool.length; ++i)
+      hex += randomPool[i].toString(16);
+  return hex;
+}
+
 document.addEventListener("DOMContentLoaded", () => {
   chrome.storage.local.get(defaultOptions, (options) => {
     console.log(options);
+    if (!options.clientId) {
+      options.clientId = getRandomToken();
+    }
+    console.log(options);
     chrome.storage.local.set(options);
-  });
-  chrome.storage.local.get(defaultOptions, function (options) {
     const app = Vue.createApp({
       data() {
         return {

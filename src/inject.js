@@ -61,14 +61,12 @@ function getFileNameFromUrl(lang) {
   else if (ext == "golang") ext = "go";
 
   let filename =
+    options.clientId + "_" +
     document.location.href
       .replace(/.*:\/\//i, "")
       .replace(/[:\/ \?<>\\\*\.]/g, "_")
       .replace(/_+/g, "_") +
-    new Date().toISOString() +
-    "." +
-    ext;
-
+    "." + ext;
   return filename;
 }
 
@@ -182,7 +180,7 @@ async function initialize() {
   }
 
   ace_editor.on("change", (ev) => {
-    console.log("[monaco-it inject] ace_editor change", { code: getAceContent(), ev });
+    // console.log("[monaco-it inject] ace_editor change", { code: getAceContent(), ev });
     $(ace_editor_div).trigger("ace-editor-change");
     if (options.editorSubstitutionPolicy == 'overlay') {
       updateSize();
